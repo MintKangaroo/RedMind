@@ -84,6 +84,10 @@ class RunRequest(RuntimeModel):
     objective: Annotated[str, Field(min_length=1, max_length=2_000)]
     max_steps: Annotated[int, Field(ge=1, le=1_000)] = 10
     timeout_seconds: Annotated[float, Field(gt=0, le=86_400)] = 300.0
+    target_ids: tuple[Annotated[str, Field(min_length=1, max_length=200)], ...] = ()
+    tool_names: tuple[Annotated[str, Field(min_length=1, max_length=100)], ...] = ()
+    risk_level: Annotated[str, Field(pattern="^(low|medium|high|critical)$")] = "low"
+    approval_requested: bool = False
     metadata: JsonObject = Field(default_factory=dict)
 
     @field_validator("objective")
