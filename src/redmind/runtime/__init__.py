@@ -36,6 +36,7 @@ from redmind.runtime.tools import (
     ToolRegistry,
     ToolSpec,
 )
+from redmind.runtime.analysts import EnumerationAnalystAgent, ReconAnalystAgent
 
 __all__ = [
     "Agent",
@@ -74,4 +75,6 @@ __all__ = [
     "ToolPermission",
     "ToolRegistry",
     "ToolSpec",
+    "ReconAnalystAgent",
+    "EnumerationAnalystAgent",
 ]
