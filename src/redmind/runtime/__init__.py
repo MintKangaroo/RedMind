@@ -43,6 +43,14 @@ from redmind.runtime.planner import (
     AttackPathCandidate,
     AttackPathPlanner,
 )
+from redmind.runtime.approval import (
+    ApprovalAuditEvent,
+    ApprovalError,
+    ApprovalEventType,
+    ApprovalRequest,
+    ApprovalService,
+    ApprovalStatus,
+)
 
 __all__ = [
     "Agent",
@@ -87,4 +95,10 @@ __all__ = [
     "AttackGraphEdge",
     "AttackPathCandidate",
     "AttackPathPlanner",
+    "ApprovalAuditEvent",
+    "ApprovalError",
+    "ApprovalEventType",
+    "ApprovalRequest",
+    "ApprovalService",
+    "ApprovalStatus",
 ]
