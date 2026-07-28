@@ -6,7 +6,7 @@ RedMind는 허가된 보안 실습 환경에서 수집한 데이터를 분석하
 
 ## 현재 상태
 
-현재 1단계 Agent Runtime이 구현되어 있습니다.
+현재 `develop` 브랜치에는 1~5단계가 구현되어 있습니다.
 
 - `Run`, `Step`, `Message`, `Evidence`, `TraceEvent` Pydantic 모델
 - 명시적인 Agent 상태 머신과 잘못된 상태 전이 차단
@@ -14,9 +14,14 @@ RedMind는 허가된 보안 실습 환경에서 수집한 데이터를 분석하
 - In-memory trace store와 append-only 실행 이벤트
 - 실행 횟수·시간 제한, cooperative cancellation, timeout
 - Agent 출력 스키마 검증과 실패 원인 분류
+- 승인 대상·도구·예산·위험도를 검증하는 Policy Engine
+- Pydantic 입력과 감사 hook을 갖춘 Tool Registry
+- Evidence gap 기반 Recon 및 Enumeration Analyst
+- Evidence coverage와 confidence를 계산하는 Attack Path Planner
 
-다음 단계인 Policy Engine, typed tool registry, 분석 Agent, 승인 workflow 등은 아직
-활성화되지 않았습니다.
+다음 단계는 Human Approval workflow입니다. 전체 진행 상황은
+[docs/roadmap.md](docs/roadmap.md), 다음 개발 세션 인수인계는
+[docs/HANDOFF.md](docs/HANDOFF.md)를 참고하세요.
 
 ## 설치
 
@@ -56,6 +61,10 @@ src/redmind/runtime/
 ├── models.py         # 상태 및 trace 도메인 모델
 ├── state_machine.py  # lifecycle 전이 규칙
 ├── agents.py         # Agent protocol 및 결정적 mock Agent
+├── analysts.py       # Recon 및 Enumeration Analyst
+├── policy.py         # scope, risk, budget 정책
+├── tools.py          # typed 및 auditable Tool Registry
+├── planner.py        # Evidence 기반 Attack Path Planner
 ├── store.py          # TraceStore와 in-memory 구현
 └── engine.py         # 제한된 비동기 runtime
 ```
