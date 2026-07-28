@@ -57,6 +57,18 @@ class FailureKind(StrEnum):
     AGENT_ERROR = "agent_error"
     INVALID_OUTPUT = "invalid_output"
     MAX_STEPS = "max_steps"
+    EVIDENCE_INSUFFICIENT = "evidence_insufficient"
+    REPEATED_FAILURE = "repeated_failure"
+    RETRY_EXHAUSTED = "retry_exhausted"
+    SELF_REJECTED = "self_rejected"
+
+
+class EvaluationVerdict(StrEnum):
+    """Schema-constrained result of an agent's self-evaluation."""
+
+    ACCEPT = "accept"
+    REPLAN = "replan"
+    REJECT = "reject"
 
 
 class TraceEventType(StrEnum):
@@ -166,12 +178,22 @@ class Evidence(EvidenceDraft):
     collected_at: datetime
 
 
+class AgentSelfEvaluation(RuntimeModel):
+    """Validated reflection output; it cannot request tools or mutate scope."""
+
+    verdict: EvaluationVerdict
+    reason: Annotated[str, Field(min_length=1, max_length=1_000)]
+    evidence_sufficient: bool
+    failure_fingerprint: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+
+
 class AgentResult(RuntimeModel):
     """Only output shape accepted from an agent implementation."""
 
     messages: tuple[MessageDraft, ...] = ()
     evidence: tuple[EvidenceDraft, ...] = ()
     complete: bool = True
+    self_evaluation: AgentSelfEvaluation | None = None
 
 
 class TraceEvent(RuntimeModel):

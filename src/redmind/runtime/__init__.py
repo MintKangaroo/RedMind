@@ -12,7 +12,9 @@ from redmind.runtime.exceptions import (
 )
 from redmind.runtime.models import (
     AgentResult,
+    AgentSelfEvaluation,
     AgentState,
+    EvaluationVerdict,
     Evidence,
     EvidenceDraft,
     FailureDetails,
@@ -27,6 +29,7 @@ from redmind.runtime.models import (
     TraceEvent,
     TraceEventType,
 )
+from redmind.runtime.reflection import ReflectionController, ReflectionPolicy
 from redmind.runtime.store import InMemoryTraceStore, TraceStore
 from redmind.runtime.policy import PolicyConfig, PolicyEngine, PolicyViolation
 from redmind.runtime.tools import (
@@ -56,8 +59,10 @@ __all__ = [
     "Agent",
     "AgentContext",
     "AgentResult",
+    "AgentSelfEvaluation",
     "AgentRuntime",
     "AgentState",
+    "EvaluationVerdict",
     "CancellationToken",
     "DeterministicMockAgent",
     "Evidence",
@@ -101,4 +106,6 @@ __all__ = [
     "ApprovalRequest",
     "ApprovalService",
     "ApprovalStatus",
+    "ReflectionController",
+    "ReflectionPolicy",
 ]
