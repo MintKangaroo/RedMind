@@ -50,3 +50,11 @@ class RuntimeCancellationError(RuntimeErrorBase):
 
 class RuntimeTimeoutError(RuntimeErrorBase):
     """Internal control-flow signal for a bounded execution timeout."""
+
+
+class ReflectionExhaustedError(RuntimeErrorBase):
+    """Raised after a classified agent failure exhausts bounded retries."""
+
+    def __init__(self, failure: object) -> None:
+        self.failure = failure
+        super().__init__("bounded agent retries were exhausted")

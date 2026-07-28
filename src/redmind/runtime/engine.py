@@ -7,13 +7,12 @@ from collections.abc import Callable, Coroutine
 from datetime import datetime, timezone
 
 UTC = timezone.utc
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
-
-from pydantic import ValidationError
 
 from redmind.runtime.agents import Agent, AgentContext, CancellationToken
 from redmind.runtime.exceptions import (
+    ReflectionExhaustedError,
     RunAlreadyExecutingError,
     RunNotExecutableError,
     RuntimeCancellationError,
@@ -33,6 +32,7 @@ from redmind.runtime.models import (
 )
 from redmind.runtime.state_machine import is_terminal
 from redmind.runtime.store import InMemoryTraceStore, TraceStore
+from redmind.runtime.reflection import ReflectionController, ReflectionPolicy
 
 Clock = Callable[[], datetime]
 IdFactory = Callable[[], UUID]
@@ -53,12 +53,14 @@ class AgentRuntime:
         *,
         clock: Clock = utc_now,
         id_factory: IdFactory = uuid4,
+        reflection_policy: ReflectionPolicy | None = None,
     ) -> None:
         self._id_factory = id_factory
         self._clock = clock
         self._store = store or InMemoryTraceStore(id_factory)
         self._tokens: dict[UUID, CancellationToken] = {}
         self._active_runs: set[UUID] = set()
+        self._reflection_policy = reflection_policy or ReflectionPolicy()
 
     async def create_run(self, request: RunRequest) -> Run:
         """Create a proposed run without starting agent execution."""
@@ -96,6 +98,7 @@ class AgentRuntime:
             return await self._store.get_trace(run_id)
 
         self._active_runs.add(run_id)
+        reflection = ReflectionController(self._reflection_policy)
         started_at = asyncio.get_running_loop().time()
         try:
             await self._store.transition_run(run_id, AgentState.EXECUTING, self._clock())
@@ -129,8 +132,13 @@ class AgentRuntime:
                 )
 
                 try:
-                    raw_result = await self._invoke(agent.execute(context), token, remaining)
-                    result = AgentResult.model_validate(raw_result)
+                    result = await self._invoke_with_retries(
+                        agent,
+                        context,
+                        token,
+                        remaining,
+                        reflection,
+                    )
                 except RuntimeCancellationError as exc:
                     await self._fail_step_and_run(
                         step.id, run_id, self._cancellation_failure(str(exc))
@@ -141,14 +149,11 @@ class AgentRuntime:
                         step.id, run_id, self._timeout_failure(run.timeout_seconds)
                     )
                     break
-                except ValidationError:
+                except ReflectionExhaustedError as exc:
                     await self._fail_step_and_run(
                         step.id,
                         run_id,
-                        FailureDetails(
-                            kind=FailureKind.INVALID_OUTPUT,
-                            message="agent returned output that failed schema validation",
-                        ),
+                        cast(FailureDetails, exc.failure),
                     )
                     break
                 except Exception as exc:  # noqa: BLE001 - agent boundary must contain failures
@@ -162,6 +167,14 @@ class AgentRuntime:
                     )
                     break
 
+                replan, reflection_failure = reflection.review(result)
+                if reflection_failure is not None:
+                    await self._fail_step_and_run(
+                        step.id,
+                        run_id,
+                        reflection_failure,
+                    )
+                    break
                 await self._record_result(run_id, step.id, result)
                 await self._store.transition_step(step.id, AgentState.OBSERVED, self._clock())
                 await self._store.transition_step(step.id, AgentState.COMPLETED, self._clock())
@@ -169,6 +182,8 @@ class AgentRuntime:
                     await self._store.transition_run(run_id, AgentState.OBSERVED, self._clock())
                     await self._store.transition_run(run_id, AgentState.COMPLETED, self._clock())
                     break
+                if replan:
+                    continue
             else:
                 await self._fail_run(
                     run_id,
@@ -231,6 +246,40 @@ class AgentRuntime:
             for task in pending:
                 task.cancel()
             await asyncio.gather(*pending, return_exceptions=True)
+
+    async def _invoke_with_retries(
+        self,
+        agent: Agent,
+        context: AgentContext,
+        token: CancellationToken,
+        timeout_seconds: float,
+        reflection: ReflectionController,
+    ) -> AgentResult:
+        started_at = asyncio.get_running_loop().time()
+        attempt = 0
+        while True:
+            remaining = timeout_seconds - (
+                asyncio.get_running_loop().time() - started_at
+            )
+            if remaining <= 0:
+                raise RuntimeTimeoutError
+            try:
+                raw_result = await self._invoke(
+                    agent.execute(context),
+                    token,
+                    remaining,
+                )
+                return AgentResult.model_validate(raw_result)
+            except (RuntimeCancellationError, RuntimeTimeoutError):
+                raise
+            except Exception as exc:  # noqa: BLE001 - retry boundary classifies failures
+                failure = reflection.classify_exception(exc)
+                if reflection.should_retry(failure, attempt):
+                    attempt += 1
+                    continue
+                raise ReflectionExhaustedError(
+                    reflection.exhausted(failure, attempt + 1)
+                ) from exc
 
     async def _record_result(self, run_id: UUID, step_id: UUID, result: AgentResult) -> None:
         for draft in result.messages:
