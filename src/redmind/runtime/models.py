@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from enum import Enum
+from typing import Annotated
+from uuid import UUID
 
-try:  # Python 3.11+
-    from enum import StrEnum
-except ImportError:  # pragma: no cover - compatibility for local Python 3.10 tooling
-    class StrEnum(str, Enum):
+if sys.version_info >= (3, 11):  # noqa: UP036 - local Python 3.10 test tooling
+    from enum import StrEnum as StrEnum  # pragma: no cover - runtime-version branch
+else:  # pragma: no cover - compatibility for local Python 3.10 tooling
+
+    class StrEnum(str, Enum):  # noqa: UP042
         """Backport of enum.StrEnum for supported tooling on Python 3.10."""
 
         def __str__(self) -> str:
-            return self.value
-from typing import Annotated
-from uuid import UUID
+            return str(self.value)
+
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 

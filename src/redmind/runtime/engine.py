@@ -5,8 +5,6 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Coroutine
 from datetime import datetime, timezone
-
-UTC = timezone.utc
 from typing import Any, cast
 from uuid import UUID, uuid4
 
@@ -30,9 +28,11 @@ from redmind.runtime.models import (
     RunTrace,
     Step,
 )
+from redmind.runtime.reflection import ReflectionController, ReflectionPolicy
 from redmind.runtime.state_machine import is_terminal
 from redmind.runtime.store import InMemoryTraceStore, TraceStore
-from redmind.runtime.reflection import ReflectionController, ReflectionPolicy
+
+UTC = timezone.utc  # noqa: UP017
 
 Clock = Callable[[], datetime]
 IdFactory = Callable[[], UUID]
@@ -258,9 +258,7 @@ class AgentRuntime:
         started_at = asyncio.get_running_loop().time()
         attempt = 0
         while True:
-            remaining = timeout_seconds - (
-                asyncio.get_running_loop().time() - started_at
-            )
+            remaining = timeout_seconds - (asyncio.get_running_loop().time() - started_at)
             if remaining <= 0:
                 raise RuntimeTimeoutError
             try:
@@ -277,25 +275,23 @@ class AgentRuntime:
                 if reflection.should_retry(failure, attempt):
                     attempt += 1
                     continue
-                raise ReflectionExhaustedError(
-                    reflection.exhausted(failure, attempt + 1)
-                ) from exc
+                raise ReflectionExhaustedError(reflection.exhausted(failure, attempt + 1)) from exc
 
     async def _record_result(self, run_id: UUID, step_id: UUID, result: AgentResult) -> None:
-        for draft in result.messages:
+        for message_draft in result.messages:
             await self._store.append_message(
                 Message(
-                    **draft.model_dump(),
+                    **message_draft.model_dump(),
                     id=self._id_factory(),
                     run_id=run_id,
                     step_id=step_id,
                     created_at=self._clock(),
                 )
             )
-        for draft in result.evidence:
+        for evidence_draft in result.evidence:
             await self._store.append_evidence(
                 Evidence(
-                    **draft.model_dump(),
+                    **evidence_draft.model_dump(),
                     id=self._id_factory(),
                     run_id=run_id,
                     step_id=step_id,

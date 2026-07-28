@@ -36,9 +36,7 @@ _ALLOWED_TRANSITIONS: dict[AgentState, frozenset[AgentState]] = {
     AgentState.COMPLETED: frozenset(),
 }
 
-TERMINAL_STATES = frozenset(
-    {AgentState.REJECTED, AgentState.FAILED, AgentState.COMPLETED}
-)
+TERMINAL_STATES = frozenset({AgentState.REJECTED, AgentState.FAILED, AgentState.COMPLETED})
 
 
 def ensure_transition(current: AgentState, requested: AgentState) -> None:

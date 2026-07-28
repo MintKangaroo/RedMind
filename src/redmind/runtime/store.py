@@ -13,6 +13,7 @@ from redmind.runtime.models import (
     AgentState,
     Evidence,
     FailureDetails,
+    JsonObject,
     Message,
     Run,
     RunTrace,
@@ -172,9 +173,7 @@ class InMemoryTraceStore:
             )
             return updated
 
-    async def request_cancellation(
-        self, run_id: UUID, occurred_at: datetime, reason: str
-    ) -> Run:
+    async def request_cancellation(self, run_id: UUID, occurred_at: datetime, reason: str) -> Run:
         async with self._lock:
             current = self._require_run(run_id)
             updated = current.model_copy(
@@ -259,7 +258,7 @@ class InMemoryTraceStore:
         step_id: UUID | None = None,
         state_from: AgentState | None = None,
         state_to: AgentState | None = None,
-        detail: dict[str, str | int | float | bool | None] | None = None,
+        detail: JsonObject | None = None,
     ) -> None:
         sequence = self._event_sequences.get(run_id, 0) + 1
         self._event_sequences[run_id] = sequence
@@ -278,7 +277,7 @@ class InMemoryTraceStore:
         )
 
     @staticmethod
-    def _failure_detail(failure: FailureDetails | None) -> dict[str, str | bool]:
+    def _failure_detail(failure: FailureDetails | None) -> JsonObject:
         if failure is None:
             return {}
         return {

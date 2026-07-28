@@ -48,6 +48,9 @@ class PolicyEngine:
                     raise PolicyViolation("public IP targets are blocked")
         if set(request.tool_names) - self.config.allowed_tools:
             raise PolicyViolation("tool is not in the allowlist")
-        if request.risk_level in self.config.require_approval_for and not request.approval_requested:
+        if (
+            request.risk_level in self.config.require_approval_for
+            and not request.approval_requested
+        ):
             raise PolicyViolation("human approval is required for this risk level")
         return True

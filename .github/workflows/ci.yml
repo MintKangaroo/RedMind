@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
 
 permissions:
@@ -26,6 +26,7 @@ jobs:
         run: ruff format --check .
       - name: Type check
         run: mypy .
+      - name: Dashboard syntax
+        run: node --check src/redmind/web/static/app.js
       - name: Test
         run: pytest
-

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from redmind.runtime.agents import Agent, AgentContext
+from redmind.runtime.agents import AgentContext
 from redmind.runtime.models import AgentResult, EvidenceDraft, MessageDraft, MessageRole
 
 
@@ -32,8 +32,20 @@ class ReconAnalystAgent:
             return AgentResult(complete=True)
         target = str(context.run.metadata.get("target_id", "approved-scope"))
         return AgentResult(
-            messages=(_proposal("recon_observation", "Review existing asset inventory and identify missing ownership metadata.", target),),
-            evidence=(EvidenceDraft(evidence_type="gap", source=self.name, summary="No prior evidence is available; asset inventory is required."),),
+            messages=(
+                _proposal(
+                    "recon_observation",
+                    "Review existing asset inventory and identify missing ownership metadata.",
+                    target,
+                ),
+            ),
+            evidence=(
+                EvidenceDraft(
+                    evidence_type="gap",
+                    source=self.name,
+                    summary="No prior evidence is available; asset inventory is required.",
+                ),
+            ),
             complete=True,
         )
 
@@ -47,7 +59,20 @@ class EnumerationAnalystAgent:
             return AgentResult(complete=True)
         target = str(context.run.metadata.get("target_id", "approved-scope"))
         return AgentResult(
-            messages=(_proposal("service_observation", "Collect approved service and technology observations; do not infer versions without evidence.", target),),
-            evidence=(EvidenceDraft(evidence_type="gap", source=self.name, summary="Service and version evidence is unavailable."),),
+            messages=(
+                _proposal(
+                    "service_observation",
+                    "Collect approved service and technology observations; "
+                    "do not infer versions without evidence.",
+                    target,
+                ),
+            ),
+            evidence=(
+                EvidenceDraft(
+                    evidence_type="gap",
+                    source=self.name,
+                    summary="Service and version evidence is unavailable.",
+                ),
+            ),
             complete=True,
         )

@@ -1,5 +1,8 @@
 import asyncio
 
+import pytest
+from pydantic import ValidationError
+
 from redmind.runtime import (
     AgentResult,
     AgentRuntime,
@@ -8,6 +11,7 @@ from redmind.runtime import (
     DeterministicMockAgent,
     EvaluationVerdict,
     FailureKind,
+    ReflectionController,
     ReflectionPolicy,
     RunRequest,
 )
@@ -32,9 +36,7 @@ def run(coro):
 
 
 def test_runtime_retries_agent_error_within_bound():
-    runtime = AgentRuntime(
-        reflection_policy=ReflectionPolicy(max_retries=2, max_same_failure=2)
-    )
+    runtime = AgentRuntime(reflection_policy=ReflectionPolicy(max_retries=2, max_same_failure=2))
     created = run(runtime.create_run(RunRequest(objective="inspect")))
     agent = FlakyAgent(failures=2)
     trace = run(runtime.execute(created.id, agent))
@@ -43,9 +45,7 @@ def test_runtime_retries_agent_error_within_bound():
 
 
 def test_retry_exhaustion_is_classified():
-    runtime = AgentRuntime(
-        reflection_policy=ReflectionPolicy(max_retries=1, max_same_failure=1)
-    )
+    runtime = AgentRuntime(reflection_policy=ReflectionPolicy(max_retries=1, max_same_failure=1))
     created = run(runtime.create_run(RunRequest(objective="inspect")))
     trace = run(runtime.execute(created.id, FlakyAgent(failures=3)))
     assert trace.run.failure is not None
@@ -59,9 +59,7 @@ def test_evidence_gap_replans_but_repetition_is_bounded():
         evidence_sufficient=False,
         failure_fingerprint="missing-version",
     )
-    runtime = AgentRuntime(
-        reflection_policy=ReflectionPolicy(max_retries=0, max_same_failure=1)
-    )
+    runtime = AgentRuntime(reflection_policy=ReflectionPolicy(max_retries=0, max_same_failure=1))
     created = run(runtime.create_run(RunRequest(objective="inspect", max_steps=3)))
     agent = DeterministicMockAgent(
         [
@@ -91,3 +89,27 @@ def test_invalid_replan_and_self_rejection_fail_closed():
     )
     assert trace.run.failure is not None
     assert trace.run.failure.kind is FailureKind.INVALID_OUTPUT
+
+    rejected = AgentSelfEvaluation(
+        verdict=EvaluationVerdict.REJECT,
+        reason="output conflicts with validated evidence",
+        evidence_sufficient=False,
+    )
+    runtime = AgentRuntime()
+    created = run(runtime.create_run(RunRequest(objective="inspect")))
+    trace = run(
+        runtime.execute(
+            created.id,
+            DeterministicMockAgent([AgentResult(self_evaluation=rejected)]),
+        )
+    )
+    assert trace.run.failure is not None
+    assert trace.run.failure.kind is FailureKind.SELF_REJECTED
+
+
+def test_schema_validation_errors_receive_stable_failure_classification():
+    with pytest.raises(ValidationError) as caught:
+        RunRequest(objective="")
+    failure = ReflectionController().classify_exception(caught.value)
+    assert failure.kind is FailureKind.INVALID_OUTPUT
+    assert failure.retryable is True
