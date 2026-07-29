@@ -13,6 +13,6 @@ typecheck:
 	mypy .
 
 test:
-	pytest
+	PYTHONPATH=src pytest
 
 check: lint format-check typecheck test

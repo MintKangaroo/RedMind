@@ -1,15 +1,18 @@
 # RedMind v0.3.0 인수인계
 
-마지막 갱신: 2026-07-28
+마지막 갱신: 2026-07-30
 
 ## 현재 상태
 
 - GitHub: `https://github.com/MintKangaroo/RedMind`
 - 통합 브랜치: `develop`
-- 현재 기능 브랜치: `feat/durable-operations`
+- 마지막 병합 커밋: `a8f404e` (`Merge pull request #1`)
+- 마지막 기능 커밋: `05581be` (`feat: add bounded distributed runtime`)
+- GitHub PR: [#1](https://github.com/MintKangaroo/RedMind/pull/1) merged
 - 완료 범위: v0.1 MVP + v0.2 Durable Operations + v0.3 Distributed Execution
 - 전체 단위 테스트: 71개
 - coverage gate: 100%
+- 현재 작업 트리: clean
 
 runtime, policy, typed tools, analysts, planner, approval, reflection, AutoPentest adapter,
 responsive Observer dashboard에 이어 PostgreSQL-compatible repository, runtime timeline
@@ -32,6 +35,17 @@ Dashboard는 `http://127.0.0.1:8000`, OpenAPI는 `/api/docs`에서 확인합니�
 ```bash
 uvicorn redmind.web.production:create_app_from_env --factory
 ```
+
+세션 시작 시 다음 명령으로 기준 브랜치와 품질 상태를 확인합니다.
+
+```bash
+git switch develop
+git pull --ff-only origin develop
+make check
+```
+
+현재 CI 품질 게이트도 통과했습니다: lint, format check, mypy, dashboard syntax,
+pytest(71개, coverage 100%).
 
 ## 운영 경계
 
@@ -65,4 +79,6 @@ uvicorn redmind.web.production:create_app_from_env --factory
 3. database migration과 backup/restore runbook
 4. independent security review와 external adapter compatibility suite
 
-구체적인 순서는 [roadmap.md](roadmap.md)를 따릅니다.
+구체적인 순서는 [roadmap.md](roadmap.md)를 따릅니다. 다음 세션은 v1.0 항목을 별도
+feature 브랜치로 나누어 구현하고, 각 작업 후 `make check`와 `develop` PR 검토를
+진행합니다.

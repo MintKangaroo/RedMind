@@ -28,7 +28,7 @@ validated integration boundary와 read-only execution dashboard를 제공합니�
 | OpenTelemetry HTTP trace, metric 및 OTLP export | 완료 |
 
 > Structured application logging과 secret rotation runbook은 배포 플랫폼별 구성이 필요해
-> v0.3 운영 가이드에서 다룹니다.
+> v1.0 운영 가이드에서 다룹니다.
 
 ## v0.3: Distributed Execution
 
