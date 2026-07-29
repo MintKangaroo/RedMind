@@ -1,7 +1,7 @@
 .PHONY: install lint format-check typecheck test check
 
 install:
-	python -m pip install -e ".[dev]"
+	python -m pip install -e ".[dev,production]"
 
 lint:
 	ruff check .
@@ -16,4 +16,3 @@ test:
 	pytest
 
 check: lint format-check typecheck test
-

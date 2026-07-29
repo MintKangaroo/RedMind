@@ -19,7 +19,12 @@ FastAPI와 외부 HTTP는 각각 read-only observer 및 integration boundary에�
 | `runtime/approval.py` | immutable proposal snapshot과 human approval audit |
 | `runtime/reflection.py` | failure fingerprint와 bounded retry/replan |
 | `integrations/autopentest.py` | 고정 HTTP operation과 untrusted response validation |
-| `web/` | read-only timeline repository, FastAPI와 static dashboard |
+| `web/adapter.py` | immutable runtime trace를 Observer timeline으로 변환 |
+| `web/repository.py` | PostgreSQL/SQLite async timeline·approval·audit persistence |
+| `web/auth.py` | digest-backed bearer authentication과 Viewer/Auditor RBAC |
+| `web/signing.py` | canonical HMAC-SHA256 signed audit export |
+| `web/telemetry.py` | credential 비수집 OpenTelemetry HTTP span과 metric |
+| `web/` | authenticated read-only FastAPI와 static dashboard |
 
 ## Trust boundary
 
@@ -61,14 +66,20 @@ Agent와 외부 API는 신뢰 경계 밖에 있습니다. proposal과 외부 응
 ## Observer
 
 Observer는 `TimelineRepository` protocol에만 의존합니다. 기본 application은 세 가지
-deterministic demo trace를 제공하며, production 환경에서는 동일 protocol을 구현하는
-durable adapter를 주입할 수 있습니다.
+deterministic demo trace를 제공하며, production factory는 동일 protocol을 구현하는
+async SQLAlchemy repository를 PostgreSQL에 연결합니다. `RuntimeTimelineAdapter`는
+runtime의 immutable `RunTrace`를 이 저장 경계의 view model로 변환합니다.
 
-HTTP API는 `GET` endpoint만 노출합니다. 대시보드의 검색과 감사 JSON 내보내기는
-브라우저에 이미 전달된 timeline을 대상으로 수행하므로 서버 상태를 변경하지 않습니다.
+HTTP API는 `GET` endpoint만 노출합니다. Viewer는 실행 기록을 조회하고 Auditor는
+추가로 canonical HMAC-SHA256 서명 감사 snapshot을 발급받습니다. token은 서버에서
+SHA-256 digest로만 비교하며 대시보드는 현재 탭의 session storage만 사용합니다.
+
+![RedMind architecture overview](assets/architecture-overview.svg)
 
 ## Deployment boundary
 
-현재 `v0.1.0`은 단일 프로세스 local/cyber-range MVP입니다. production 배포에는
-별도의 authentication, authorization, durable repository, TLS termination과 signed
-audit export가 필요합니다. 이는 [roadmap](roadmap.md)의 v0.2 범위입니다.
+`v0.2.0` production factory는 PostgreSQL URL, 서로 다른 32자 이상 Viewer/Auditor
+token과 32자 이상 signing key가 없으면 시작하지 않습니다. OpenTelemetry OTLP export는
+선택 사항이며 Authorization header, token, response payload는 span attribute로 남기지
+않습니다. TLS termination, database backup, secret rotation은 배포 플랫폼 경계에서
+구성해야 합니다.

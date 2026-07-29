@@ -1,4 +1,4 @@
-# RedMind v0.1.0 인수인계
+# RedMind v0.2.0 인수인계
 
 마지막 갱신: 2026-07-28
 
@@ -6,25 +6,41 @@
 
 - GitHub: `https://github.com/MintKangaroo/RedMind`
 - 통합 브랜치: `develop`
-- 현재 기능 브랜치: `feat/execution-timeline`
-- 완료된 MVP 단계: 1~9
-- 전체 단위 테스트: 54개
+- 현재 기능 브랜치: `feat/durable-operations`
+- 완료 범위: v0.1 MVP + v0.2 Durable Operations
+- 전체 단위 테스트: 65개
 - coverage gate: 100%
 
-9단계까지의 runtime, policy, typed tools, analysts, planner, approval, reflection,
-AutoPentest adapter 및 read-only Observer dashboard가 구현되어 있습니다.
+runtime, policy, typed tools, analysts, planner, approval, reflection, AutoPentest adapter,
+responsive Observer dashboard에 이어 PostgreSQL-compatible repository, runtime timeline
+adapter, Viewer/Auditor RBAC, signed audit export와 OpenTelemetry가 구현되어 있습니다.
 
 ## 검증 명령
 
 Python 3.12 환경에서:
 
 ```bash
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,production]"
 make check
 uvicorn redmind.web.app:app --reload
 ```
 
-Dashboard는 `http://127.0.0.1:8000`, OpenAPI는 `/api/docs`에서 확인합니다.
+Dashboard는 `http://127.0.0.1:8000`, OpenAPI는 `/api/docs`에서 확인합니다. 운영 모드는
+`.env.example`을 기준으로 설정한 뒤 아래 factory로 실행합니다.
+
+```bash
+uvicorn redmind.web.production:create_app_from_env --factory
+```
+
+## 운영 경계
+
+- Local app은 deterministic demo trace와 무인증 read-only API를 제공합니다.
+- Production factory는 PostgreSQL, Viewer/Auditor token, audit signing key를 강제합니다.
+- token은 현재 브라우저 탭에만 저장하고 서버에서는 SHA-256 digest로 비교합니다.
+- Auditor만 server-side HMAC-SHA256 signed audit snapshot을 내보낼 수 있습니다.
+- OpenTelemetry는 HTTP method, route, status, duration만 기록하며 credential과 payload를
+  수집하지 않습니다.
+- database migration/backup, TLS, rate limit, token rotation은 배포 플랫폼에서 구성합니다.
 
 ## 변경 금지 보안 조건
 
@@ -38,12 +54,12 @@ Dashboard는 `http://127.0.0.1:8000`, OpenAPI는 `/api/docs`에서 확인합니�
 
 ## 다음 작업
 
-다음 기능은 `v0.2` durable operations 범위입니다.
+다음 기능은 `v0.3` distributed execution 범위입니다.
 
-1. runtime trace와 Observer view model 사이 production adapter
-2. PostgreSQL 기반 trace/approval repository
-3. dashboard authentication과 RBAC
-4. server-side signed audit export
-5. OpenTelemetry trace/metric/log
+1. bounded worker queue와 cooperative cancellation 전파
+2. idempotency key와 재전송 안전성
+3. multi-project scope isolation
+4. structured logging 및 secret rotation 운영 가이드
+5. database migration과 backup/restore runbook
 
 구체적인 순서는 [roadmap.md](roadmap.md)를 따릅니다.

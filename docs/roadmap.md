@@ -17,15 +17,20 @@
 MVP는 deterministic local execution, deny-by-default policy, human approval,
 validated integration boundary와 read-only execution dashboard를 제공합니다.
 
+## v0.2: Durable Operations
+
+| 기능 | 상태 |
+|---|---|
+| PostgreSQL-compatible trace 및 approval repository | 완료 |
+| runtime trace → Observer view model adapter | 완료 |
+| authentication과 Viewer/Auditor dashboard RBAC | 완료 |
+| server-side HMAC-SHA256 signed audit export | 완료 |
+| OpenTelemetry HTTP trace, metric 및 OTLP export | 완료 |
+
+> Structured application logging과 secret rotation runbook은 배포 플랫폼별 구성이 필요해
+> v0.3 운영 가이드에서 다룹니다.
+
 ## 다음 마일스톤
-
-### v0.2: Durable Operations
-
-- PostgreSQL 기반 trace 및 approval repository
-- runtime trace를 Observer view model로 변환하는 production adapter
-- authentication과 role-based dashboard access
-- server-side signed audit export
-- OpenTelemetry trace, metric 및 structured logging
 
 ### v0.3: Distributed Execution
 

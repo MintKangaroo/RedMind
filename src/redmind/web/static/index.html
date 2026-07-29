@@ -36,10 +36,13 @@
       </a>
       <div class="top-actions">
         <span class="api-health" id="api-health"><i></i> API CHECK</span>
-        <span class="environment"><i></i> AUTHORIZED LAB</span>
+        <span class="environment" id="environment-badge"><i></i> AUTHORIZED LAB</span>
         <time class="clock" id="clock">--:--:-- KST</time>
         <a class="docs-link" href="/api/docs" target="_blank" rel="noreferrer">API DOCS ↗</a>
-        <span class="avatar" aria-label="현재 사용자">MK</span>
+        <button class="access-button" id="access-button" type="button" aria-haspopup="dialog">
+          <span class="access-indicator"></span>
+          <span id="access-label">LOCAL</span>
+        </button>
       </div>
     </header>
 
@@ -90,15 +93,15 @@
         </div>
         <div class="sidebar-footer">
           <span>REDMIND / OBSERVER</span>
-          <strong>v0.1.0</strong>
+          <strong id="observer-version">v0.2.0</strong>
         </div>
       </aside>
       <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="메뉴 닫기"></button>
 
       <main class="workspace" id="main-content">
-        <div class="demo-notice" role="note">
-          <span><i></i> DEMO DATA</span>
-          <p>이 화면은 재현 가능한 안전한 trace이며 실제 명령·credential·exploit payload를 포함하지 않습니다.</p>
+        <div class="demo-notice" id="mode-notice" role="note">
+          <span id="mode-label"><i></i> DEMO DATA</span>
+          <p id="mode-description">이 화면은 재현 가능한 안전한 trace이며 실제 명령·credential·exploit payload를 포함하지 않습니다.</p>
           <strong>READ ONLY</strong>
         </div>
 
@@ -262,6 +265,43 @@
         </footer>
       </main>
     </div>
+
+    <dialog class="access-dialog" id="access-dialog" aria-labelledby="access-title">
+      <form class="access-form" id="access-form">
+        <div class="access-dialog-heading">
+          <span class="access-lock">◆</span>
+          <div>
+            <p>OBSERVER ACCESS</p>
+            <h2 id="access-title">보호된 실행 기록 열기</h2>
+          </div>
+        </div>
+        <p class="access-copy" id="access-message">
+          발급받은 Viewer 또는 Auditor bearer token을 입력하세요. Token은 현재 브라우저 탭의
+          session storage에만 보관됩니다.
+        </p>
+        <label class="token-control">
+          <span>BEARER TOKEN</span>
+          <input
+            id="access-token"
+            name="token"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="redmind access token"
+            required
+          >
+        </label>
+        <div class="access-role-grid" aria-label="접근 역할">
+          <div><strong>VIEWER</strong><span>실행·Evidence 조회</span></div>
+          <div><strong>AUDITOR</strong><span>조회 + 서명 감사 파일</span></div>
+        </div>
+        <div class="access-dialog-actions">
+          <button class="button quiet" id="clear-access" type="button">저장된 Token 지우기</button>
+          <button class="button secondary" id="access-cancel" type="button">닫기</button>
+          <button class="button primary" type="submit">안전하게 연결</button>
+        </div>
+      </form>
+    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="/assets/app.js" defer></script>

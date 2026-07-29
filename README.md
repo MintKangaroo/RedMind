@@ -15,7 +15,7 @@
   </a>
   <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/tests-54%20passing-50E1B3?style=flat-square" alt="54 tests passing">
+  <img src="https://img.shields.io/badge/tests-65%20passing-50E1B3?style=flat-square" alt="65 tests passing">
   <img src="https://img.shields.io/badge/coverage-100%25-50E1B3?style=flat-square" alt="100% coverage">
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-EF5364?style=flat-square" alt="MIT License">
@@ -23,6 +23,7 @@
 </p>
 
 <p align="center">
+  <a href="#한눈에-보기">한눈에 보기</a> ·
   <a href="#-빠른-시작">빠른 시작</a> ·
   <a href="#-핵심-기능">핵심 기능</a> ·
   <a href="#-아키텍처">아키텍처</a> ·
@@ -31,6 +32,21 @@
 </p>
 
 ---
+
+## 한눈에 보기
+
+RedMind는 Agent가 자유롭게 행동하는 자동화 도구가 아닙니다. 허가 범위, 정책, 사람의
+승인, typed tool, 검증된 Evidence를 차례로 통과한 작업만 실행하고 전체 과정을 영속
+trace로 남기는 **정책 통제형 보안 연구 플랫폼**입니다.
+
+![RedMind v0.2 architecture overview](./docs/assets/architecture-overview.svg)
+
+| 계층 | 한 문장 요약 |
+|---|---|
+| Control plane | scope·target·tool·risk·budget을 고정하고 사람의 승인을 실행 직전에 재검증 |
+| Evidence loop | Analyst 제안을 deny-by-default 정책과 typed tool 경계 안에서만 관찰 |
+| Durable plane | PostgreSQL에 timeline·approval·audit event를 보존 |
+| Observer plane | Viewer/Auditor RBAC, HMAC 서명 내보내기, OTLP trace/metric 제공 |
 
 ## 실행 관찰 대시보드
 
@@ -47,6 +63,13 @@ RedMind Observer는 실행 상태를 변경하지 않는 **read-only control roo
   </p>
 </details>
 
+<details>
+  <summary><strong>Production access dialog 보기</strong></summary>
+  <p align="center">
+    <img src="./docs/screenshots/access-control.png" width="640" alt="RedMind production access dialog">
+  </p>
+</details>
+
 대시보드에서 제공하는 기능:
 
 - 완료·실행 중·정책 거부 trace 전환과 상태별 시각화
@@ -56,6 +79,7 @@ RedMind Observer는 실행 상태를 변경하지 않는 **read-only control roo
 - 외부 Evidence의 `UNTRUSTED · VALIDATED` trust boundary 표시
 - token budget, 예상 비용, 실행 시간 및 진행률 관찰
 - 현재 trace의 감사 로그 JSON 내보내기
+- Viewer/Auditor bearer 역할 분리와 server-side HMAC 서명 감사 파일
 - 데스크톱·태블릿·모바일 반응형 레이아웃
 
 > 기본 화면은 안전한 deterministic demo trace를 사용합니다. 실제 명령, credential,
@@ -71,7 +95,7 @@ cd RedMind
 
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,production]"
 ```
 
 ### 2. 대시보드 실행
@@ -95,6 +119,25 @@ make check
 `make check`는 Ruff lint/format, strict mypy, 전체 pytest와 100% coverage gate를
 순서대로 실행합니다.
 
+### 4. PostgreSQL 운영 모드
+
+`.env.example`을 기준으로 `REDMIND_DATABASE_URL`, 서로 다른 Viewer/Auditor token,
+감사 서명 키를 설정합니다. 운영 모드는 설정 하나라도 안전 기준을 충족하지 않으면
+시작하지 않습니다.
+
+```bash
+export REDMIND_ENVIRONMENT=production
+export REDMIND_DATABASE_URL='postgresql+asyncpg://redmind:change-me@127.0.0.1/redmind'
+export REDMIND_VIEWER_TOKEN='replace-with-at-least-32-random-characters'
+export REDMIND_AUDITOR_TOKEN='replace-with-another-32-random-characters'
+export REDMIND_AUDIT_SIGNING_KEY='replace-with-at-least-32-random-characters'
+
+uvicorn redmind.web.production:create_app_from_env --factory
+```
+
+OTLP collector를 사용하는 경우 `REDMIND_OTLP_ENDPOINT=http://127.0.0.1:4318`을
+추가하면 HTTP request span, request count, latency histogram을 전송합니다.
+
 ## 핵심 기능
 
 | 영역 | 구현 내용 | 안전 장치 |
@@ -108,33 +151,16 @@ make check
 | Reflection | 실패 분류, retry fingerprint, bounded replan | 동일 실패·retry 횟수 상한 |
 | AutoPentest Adapter | 자산·Finding·Attack Graph 조회와 observation 요청 | 응답 크기·timeout·schema trust boundary |
 | Observer Dashboard | Run/Step/Tool/Evidence/Approval/Usage/Report 통합 관찰 | read-only API, demo trace 명시 |
+| Durable Operations | async SQLAlchemy/PostgreSQL repository와 runtime timeline adapter | readiness, schema validation |
+| Access & Audit | digest-backed bearer RBAC와 HMAC-SHA256 감사 export | token 비노출, constant-time compare |
+| Telemetry | OpenTelemetry HTTP span·count·latency와 선택적 OTLP export | credential·payload 미수집 |
 
 ## 아키텍처
 
 RedMind의 핵심 도메인은 FastAPI나 외부 벤더 SDK에 의존하지 않습니다. 정책과 승인
 경계를 통과한 구조화된 제안만 도구 또는 integration adapter에 전달됩니다.
 
-```mermaid
-flowchart LR
-    O[Operator] --> P[Attack Path Planner]
-    E[(Validated Evidence)] --> A[Recon / Enumeration Analysts]
-    A --> P
-    P --> G{Policy Engine}
-    G -- deny --> X[Rejected + Audit Event]
-    G -- approval required --> H{Human Approval}
-    H -- reject / expire --> X
-    H -- approved + revalidated --> T[Typed Tool Registry]
-    T --> I[AutoPentest Adapter]
-    I --> E
-
-    R[Bounded Agent Runtime] -. orchestrates .-> A
-    R -. trace .-> S[(Trace Store)]
-    G -. trace .-> S
-    H -. trace .-> S
-    T -. trace .-> S
-    S --> W[Read-only Observer API]
-    W --> D[Security Operations Dashboard]
-```
+![RedMind guarded execution flow](./docs/assets/execution-flow.svg)
 
 ### 실행 흐름
 
@@ -156,13 +182,18 @@ Observer API는 의도적으로 조회 기능만 제공합니다.
 | Method | Endpoint | 설명 |
 |---|---|---|
 | `GET` | `/health/live` | 프로세스 liveness |
+| `GET` | `/health/ready` | 데이터 저장소 readiness |
+| `GET` | `/api/v1/meta` | 환경·인증·서명 기능 metadata |
 | `GET` | `/api/v1/runs` | 최신순 Run summary 목록 |
 | `GET` | `/api/v1/runs/{run_id}` | 전체 실행 timeline |
+| `GET` | `/api/v1/runs/{run_id}/audit-export` | Auditor 전용 서명 감사 파일 |
 | `GET` | `/api/docs` | Swagger UI |
 
 ```bash
-curl -s http://127.0.0.1:8000/api/v1/runs
-curl -s http://127.0.0.1:8000/api/v1/runs/5bdece5b-53fd-4a81-b326-cb0894963463
+curl -s -H "Authorization: Bearer $REDMIND_VIEWER_TOKEN" \
+  http://127.0.0.1:8000/api/v1/runs
+curl -s -H "Authorization: Bearer $REDMIND_AUDITOR_TOKEN" \
+  http://127.0.0.1:8000/api/v1/runs/5bdece5b-53fd-4a81-b326-cb0894963463/audit-export
 ```
 
 응답 모델과 repository 주입 방법은 [API 문서](./docs/api.md)에 정리되어 있습니다.
@@ -184,8 +215,14 @@ RedMind/
 │   ├── integrations/
 │   │   └── autopentest.py     # validated external adapter
 │   └── web/
-│       ├── app.py             # read-only FastAPI application
-│       ├── timeline.py        # dashboard view models/repository
+│       ├── app.py             # authenticated read-only FastAPI application
+│       ├── adapter.py         # runtime trace → observer timeline
+│       ├── repository.py      # async SQL/PostgreSQL persistence
+│       ├── auth.py            # bearer authentication and RBAC
+│       ├── signing.py         # canonical HMAC audit export
+│       ├── telemetry.py       # OpenTelemetry instrumentation
+│       ├── production.py      # fail-closed application factory
+│       ├── timeline.py        # dashboard view models
 │       └── static/            # responsive dashboard
 ├── tests/unit/                # deterministic unit tests
 ├── docs/                      # architecture, API, threat model
@@ -211,7 +248,7 @@ RedMind/
 
 ## 현재 상태
 
-`v0.1.0` MVP의 1~9단계가 구현되어 있습니다.
+`v0.2.0` Durable Operations까지 구현되어 있습니다.
 
 - [x] Agent Runtime
 - [x] Policy Engine
@@ -222,9 +259,14 @@ RedMind/
 - [x] Bounded Reflection / Retry
 - [x] AutoPentest AI Adapter
 - [x] Execution Observer Dashboard
+- [x] PostgreSQL-compatible durable timeline/approval repository
+- [x] Runtime trace → Observer timeline adapter
+- [x] Viewer/Auditor authentication과 RBAC
+- [x] Server-side HMAC signed audit export
+- [x] OpenTelemetry trace·metric·OTLP export
 
-다음 마일스톤은 실제 운영 adapter, 영속 trace repository, authentication/RBAC 및
-OpenTelemetry 기반 관찰성입니다. 세부 계획은 [Roadmap](./docs/roadmap.md)에 있습니다.
+다음 마일스톤은 bounded worker queue, idempotency, cancellation propagation과
+multi-project scope isolation입니다. 세부 계획은 [Roadmap](./docs/roadmap.md)에 있습니다.
 
 ## 개발 참여
 

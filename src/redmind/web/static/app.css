@@ -243,17 +243,40 @@ kbd,
   color: var(--mint);
 }
 
-.avatar {
-  width: 34px;
+.access-button {
+  min-width: 78px;
   height: 34px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
   border: 1px solid rgba(239, 83, 100, .25);
-  border-radius: 50%;
+  border-radius: 99px;
   color: #ffc0c6;
   background: var(--red-soft);
-  font-size: 10px;
-  letter-spacing: 0;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.access-button.connected {
+  color: var(--mint);
+  border-color: rgba(80, 225, 179, .24);
+  background: var(--mint-soft);
+}
+
+.access-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px rgba(239, 83, 100, .55);
+}
+
+.access-button.connected .access-indicator {
+  background: var(--mint);
+  box-shadow: 0 0 8px rgba(80, 225, 179, .62);
 }
 
 .icon-button {
@@ -1818,6 +1841,126 @@ input:focus {
   color: #ffabb3;
   border-color: rgba(239, 83, 100, .25);
   background: rgba(35, 17, 20, .96);
+}
+
+.access-dialog {
+  width: min(510px, calc(100vw - 32px));
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #344149;
+  border-radius: 15px;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 100% 0, rgba(239, 83, 100, .11), transparent 18rem),
+    #0d1215;
+  box-shadow: 0 32px 100px rgba(0, 0, 0, .7);
+}
+
+.access-dialog::backdrop {
+  background: rgba(2, 4, 5, .78);
+  backdrop-filter: blur(9px);
+}
+
+.access-form {
+  padding: 24px;
+}
+
+.access-dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.access-lock {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(239, 83, 100, .25);
+  border-radius: 11px;
+  color: var(--red-bright);
+  background: var(--red-soft);
+  font-size: 13px;
+}
+
+.access-dialog-heading p {
+  margin: 0 0 3px;
+  color: var(--red-bright);
+  font: 800 8px "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .16em;
+}
+
+.access-dialog-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.access-copy {
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.token-control {
+  display: grid;
+  gap: 7px;
+}
+
+.token-control span {
+  color: var(--faint);
+  font: 800 8px "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .12em;
+}
+
+.token-control input {
+  height: 44px;
+  padding: 0 13px;
+  font: 11px "SFMono-Regular", Consolas, monospace;
+}
+
+.access-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 13px 0 20px;
+}
+
+.access-role-grid div {
+  padding: 10px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .015);
+}
+
+.access-role-grid strong,
+.access-role-grid span {
+  display: block;
+}
+
+.access-role-grid strong {
+  color: var(--mint);
+  font: 750 8px "SFMono-Regular", Consolas, monospace;
+  letter-spacing: .1em;
+}
+
+.access-role-grid span {
+  margin-top: 4px;
+  color: var(--faint);
+  font-size: 8px;
+}
+
+.access-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.button.quiet {
+  margin-right: auto;
+  border-color: transparent;
+  color: var(--faint);
+  background: transparent;
 }
 
 @keyframes reveal {
