@@ -98,17 +98,24 @@ class SQLRepository:
             await session.execute(delete(timelines).where(timelines.c.run_id == values["run_id"]))
             await session.execute(insert(timelines).values(**values))
 
-    async def list_runs(self) -> tuple[RunSummary, ...]:
+    async def list_runs(self, project_id: str = "default") -> tuple[RunSummary, ...]:
         statement = select(timelines.c.document).order_by(timelines.c.started_at.desc())
         async with self._sessions() as session:
             rows = (await session.execute(statement)).scalars()
-            return tuple(RunTimeline.model_validate(document).run for document in rows)
+            return tuple(
+                timeline.run
+                for document in rows
+                if (timeline := RunTimeline.model_validate(document)).run.project_id == project_id
+            )
 
-    async def get_run(self, run_id: UUID) -> RunTimeline | None:
+    async def get_run(self, run_id: UUID, project_id: str = "default") -> RunTimeline | None:
         statement = select(timelines.c.document).where(timelines.c.run_id == str(run_id))
         async with self._sessions() as session:
             document = (await session.execute(statement)).scalar_one_or_none()
-            return RunTimeline.model_validate(document) if document is not None else None
+            if document is None:
+                return None
+            timeline = RunTimeline.model_validate(document)
+            return timeline if timeline.run.project_id == project_id else None
 
     async def save_approval_request(self, request: ApprovalRequest) -> None:
         values = {

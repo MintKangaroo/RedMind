@@ -97,6 +97,8 @@ class RunRequest(RuntimeModel):
     """Caller-supplied bounds and objective for a new run."""
 
     objective: Annotated[str, Field(min_length=1, max_length=2_000)]
+    project_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")] = "default"
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=128)] | None = None
     max_steps: Annotated[int, Field(ge=1, le=1_000)] = 10
     timeout_seconds: Annotated[float, Field(gt=0, le=86_400)] = 300.0
     target_ids: tuple[Annotated[str, Field(min_length=1, max_length=200)], ...] = ()
@@ -128,6 +130,8 @@ class Run(RuntimeModel):
     cancellation_requested_at: datetime | None = None
     cancellation_reason: str | None = None
     failure: FailureDetails | None = None
+    project_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")] = "default"
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=128)] | None = None
 
 
 class Step(RuntimeModel):

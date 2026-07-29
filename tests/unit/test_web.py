@@ -15,7 +15,7 @@ def test_timeline_api_and_ui_are_read_only():
         assert client.get("/health/ready").json() == {"status": "ready"}
         metadata = client.get("/api/v1/meta").json()
         assert metadata == {
-            "version": "0.2.0",
+            "version": "0.3.0",
             "environment": "local",
             "authentication_required": False,
             "signed_exports": False,

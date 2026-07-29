@@ -12,7 +12,11 @@ from redmind.runtime.approval import (
 )
 from redmind.runtime.engine import AgentRuntime
 from redmind.runtime.exceptions import (
+    IdempotencyConflictError,
     InvalidStateTransitionError,
+    ProjectScopeViolationError,
+    QueueCapacityError,
+    QueueClosedError,
     RunAlreadyExecutingError,
     RunNotExecutableError,
     RunNotFoundError,
@@ -45,6 +49,7 @@ from redmind.runtime.planner import (
     AttackPathPlanner,
 )
 from redmind.runtime.policy import PolicyConfig, PolicyEngine, PolicyViolation
+from redmind.runtime.queue import BoundedExecutionQueue, ExecutionHandle
 from redmind.runtime.reflection import ReflectionController, ReflectionPolicy
 from redmind.runtime.store import InMemoryTraceStore, TraceStore
 from redmind.runtime.tools import (
@@ -78,6 +83,10 @@ __all__ = [
     "RunAlreadyExecutingError",
     "RunNotExecutableError",
     "RunNotFoundError",
+    "ProjectScopeViolationError",
+    "IdempotencyConflictError",
+    "QueueCapacityError",
+    "QueueClosedError",
     "RunRequest",
     "RunTrace",
     "RuntimeErrorBase",
@@ -108,4 +117,6 @@ __all__ = [
     "ApprovalStatus",
     "ReflectionController",
     "ReflectionPolicy",
+    "BoundedExecutionQueue",
+    "ExecutionHandle",
 ]

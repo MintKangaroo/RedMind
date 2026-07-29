@@ -25,6 +25,7 @@ FastAPI와 외부 HTTP는 각각 read-only observer 및 integration boundary에�
 | `web/signing.py` | canonical HMAC-SHA256 signed audit export |
 | `web/telemetry.py` | credential 비수집 OpenTelemetry HTTP span과 metric |
 | `web/` | authenticated read-only FastAPI와 static dashboard |
+| `runtime/queue.py` | bounded worker queue와 cooperative cancellation propagation |
 
 ## Trust boundary
 
@@ -62,6 +63,9 @@ Agent와 외부 API는 신뢰 경계 밖에 있습니다. proposal과 외부 응
 - 승인은 proposal snapshot에 묶이며 실행 직전 현재 policy로 재검증됩니다.
 - Tool Call, Approval과 상태 전이는 append-only audit event로 추적합니다.
 - 외부 문자열은 검증 이후에도 untrusted provenance를 유지합니다.
+- `project_id`는 Run 생성 시 고정되며 다른 project의 Run을 조회·실행·취소할 수 없습니다.
+- 동일 project의 동일 `idempotency_key` 재시도는 새 Run을 만들지 않습니다.
+- worker 수와 pending queue 길이에는 명시적 상한이 있습니다.
 
 ## Observer
 
@@ -78,7 +82,7 @@ SHA-256 digest로만 비교하며 대시보드는 현재 탭의 session storage�
 
 ## Deployment boundary
 
-`v0.2.0` production factory는 PostgreSQL URL, 서로 다른 32자 이상 Viewer/Auditor
+`v0.3.0` production factory는 PostgreSQL URL, 서로 다른 32자 이상 Viewer/Auditor
 token과 32자 이상 signing key가 없으면 시작하지 않습니다. OpenTelemetry OTLP export는
 선택 사항이며 Authorization header, token, response payload는 span attribute로 남기지
 않습니다. TLS termination, database backup, secret rotation은 배포 플랫폼 경계에서

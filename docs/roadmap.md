@@ -30,14 +30,18 @@ validated integration boundary와 read-only execution dashboard를 제공합니�
 > Structured application logging과 secret rotation runbook은 배포 플랫폼별 구성이 필요해
 > v0.3 운영 가이드에서 다룹니다.
 
+## v0.3: Distributed Execution
+
+| 기능 | 상태 |
+|---|---|
+| bounded local worker queue와 cooperative cancellation | 완료 |
+| idempotency key와 재전송 안전성 | 완료 |
+| multi-project scope isolation | 완료 |
+
+Redis 없는 local mode를 유지하면서 queue capacity, worker cancellation, project scope를
+runtime 경계에서 검증합니다.
+
 ## 다음 마일스톤
-
-### v0.3: Distributed Execution
-
-- bounded worker queue와 cooperative cancellation 전파
-- Redis 없이도 동작하는 기본 local mode 유지
-- idempotency key와 재전송 안전성
-- multi-project scope isolation
 
 ### v1.0: Stable Research Platform
 

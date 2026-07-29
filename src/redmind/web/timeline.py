@@ -17,6 +17,7 @@ class ViewModel(BaseModel):
 class RunSummary(ViewModel):
     id: UUID
     objective: str
+    project_id: str = "default"
     state: str
     started_at: datetime
     duration_ms: int = Field(ge=0)
@@ -92,26 +93,31 @@ class RunTimeline(ViewModel):
 
 
 class TimelineRepository(Protocol):
-    async def list_runs(self) -> tuple[RunSummary, ...]: ...
+    async def list_runs(self, project_id: str = "default") -> tuple[RunSummary, ...]: ...
 
-    async def get_run(self, run_id: UUID) -> RunTimeline | None: ...
+    async def get_run(self, run_id: UUID, project_id: str = "default") -> RunTimeline | None: ...
 
 
 class InMemoryTimelineRepository:
     def __init__(self, timelines: Iterable[RunTimeline] = ()) -> None:
         self._timelines = {timeline.run.id: timeline for timeline in timelines}
 
-    async def list_runs(self) -> tuple[RunSummary, ...]:
+    async def list_runs(self, project_id: str = "default") -> tuple[RunSummary, ...]:
         return tuple(
             sorted(
-                (timeline.run for timeline in self._timelines.values()),
+                (
+                    timeline.run
+                    for timeline in self._timelines.values()
+                    if timeline.run.project_id == project_id
+                ),
                 key=lambda run: run.started_at,
                 reverse=True,
             )
         )
 
-    async def get_run(self, run_id: UUID) -> RunTimeline | None:
-        return self._timelines.get(run_id)
+    async def get_run(self, run_id: UUID, project_id: str = "default") -> RunTimeline | None:
+        timeline = self._timelines.get(run_id)
+        return timeline if timeline is not None and timeline.run.project_id == project_id else None
 
 
 def demo_timeline() -> RunTimeline:

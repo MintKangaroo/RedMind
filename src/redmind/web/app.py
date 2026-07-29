@@ -54,7 +54,7 @@ def create_app(
 ) -> FastAPI:
     app = FastAPI(
         title="RedMind Execution Observer",
-        version="0.2.0",
+        version="0.3.0",
         docs_url="/api/docs",
         redoc_url=None,
         lifespan=lifespan,
@@ -110,7 +110,7 @@ def create_app(
     @app.get("/api/v1/meta", response_model=ObserverMeta, tags=["observer"])
     async def metadata() -> ObserverMeta:
         return ObserverMeta(
-            version="0.2.0",
+            version="0.3.0",
             environment=environment,
             authentication_required=authorizer is not None,
             signed_exports=audit_signer is not None,
@@ -122,8 +122,8 @@ def create_app(
         tags=["timeline"],
         dependencies=[Depends(viewer)],
     )
-    async def list_runs() -> tuple[RunSummary, ...]:
-        return await repo.list_runs()
+    async def list_runs(project_id: str = "default") -> tuple[RunSummary, ...]:
+        return await repo.list_runs(project_id)
 
     @app.get(
         "/api/v1/runs/{run_id}",
@@ -131,8 +131,8 @@ def create_app(
         tags=["timeline"],
         dependencies=[Depends(viewer)],
     )
-    async def get_run(run_id: UUID) -> RunTimeline:
-        timeline = await repo.get_run(run_id)
+    async def get_run(run_id: UUID, project_id: str = "default") -> RunTimeline:
+        timeline = await repo.get_run(run_id, project_id)
         if timeline is None:
             raise HTTPException(status_code=404, detail="run not found")
         return timeline
@@ -145,10 +145,11 @@ def create_app(
     async def export_audit(
         run_id: UUID,
         principal: Annotated[object, Depends(auditor)],
+        project_id: str = "default",
     ) -> SignedAuditExport:
         if audit_signer is None:
             raise HTTPException(status_code=503, detail="signed audit export is not configured")
-        timeline = await repo.get_run(run_id)
+        timeline = await repo.get_run(run_id, project_id)
         if timeline is None:
             raise HTTPException(status_code=404, detail="run not found")
         return audit_signer.sign(timeline, cast(Principal, principal))

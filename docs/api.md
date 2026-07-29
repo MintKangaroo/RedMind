@@ -29,21 +29,23 @@ uvicorn redmind.web.app:app --reload
 
 ```json
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "environment": "production",
   "authentication_required": true,
   "signed_exports": true
 }
 ```
 
-### `GET /api/v1/runs`
+### `GET /api/v1/runs?project_id=default`
 
-`started_at` 내림차순으로 `RunSummary` 목록을 반환합니다.
+요청한 project scope의 Run만 `started_at` 내림차순으로 반환합니다. `project_id`는
+영문·숫자·점·밑줄·하이픈으로 구성된 최대 64자 식별자입니다.
 
 ```json
 [
   {
     "id": "5bdece5b-53fd-4a81-b326-cb0894963463",
+    "project_id": "default",
     "objective": "승인된 lab-web-01의 서비스 Evidence gap 검증",
     "state": "completed",
     "started_at": "2026-07-28T09:14:22Z",
@@ -54,11 +56,15 @@ uvicorn redmind.web.app:app --reload
 ]
 ```
 
-### `GET /api/v1/runs/{run_id}`
+### `GET /api/v1/runs/{run_id}?project_id=default`
 
 Run summary와 step, tool call, evidence, approval, usage, failure 및 report를 포함한
 `RunTimeline`을 반환합니다. 존재하지 않는 UUID는 `404`와 `run not found` detail을
 반환합니다.
+
+Run 생성 시 runtime `RunRequest`에 `project_id`와 선택적인 8~128자
+`idempotency_key`를 지정할 수 있습니다. 같은 project에서 같은 key로 재시도하면 기존
+Run을 반환하고, 다른 project에서는 독립적으로 사용할 수 있습니다.
 
 ### `GET /api/v1/runs/{run_id}/audit-export`
 
@@ -95,8 +101,8 @@ app = create_app(repository)
 
 ```python
 class TimelineRepository(Protocol):
-    async def list_runs(self) -> tuple[RunSummary, ...]: ...
-    async def get_run(self, run_id: UUID) -> RunTimeline | None: ...
+    async def list_runs(self, project_id: str = "default") -> tuple[RunSummary, ...]: ...
+    async def get_run(self, run_id: UUID, project_id: str = "default") -> RunTimeline | None: ...
 ```
 
 내장 `SQLRepository`는 이 protocol과 timeline/approval write method를 구현하며
@@ -108,6 +114,7 @@ class TimelineRepository(Protocol):
 - digest-backed bearer token과 constant-time compare
 - Viewer 조회 / Auditor 서명 내보내기 역할 분리
 - HMAC-SHA256 canonical signed export
+- project scope 확인과 idempotency 재전송 안전성
 - response model을 통한 output validation
 - UUID path validation
 - 외부 Evidence trust label 보존

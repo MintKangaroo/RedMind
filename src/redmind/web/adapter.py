@@ -117,6 +117,7 @@ class RuntimeTimelineAdapter:
             run=RunSummary(
                 id=trace.run.id,
                 objective=trace.run.objective,
+                project_id=trace.run.project_id,
                 state=trace.run.state.value,
                 started_at=started_at,
                 duration_ms=cls._duration_ms(started_at, ended_at),

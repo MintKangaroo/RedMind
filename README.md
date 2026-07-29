@@ -15,7 +15,7 @@
   </a>
   <img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/tests-65%20passing-50E1B3?style=flat-square" alt="65 tests passing">
+  <img src="https://img.shields.io/badge/tests-71%20passing-50E1B3?style=flat-square" alt="71 tests passing">
   <img src="https://img.shields.io/badge/coverage-100%25-50E1B3?style=flat-square" alt="100% coverage">
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-EF5364?style=flat-square" alt="MIT License">
@@ -39,7 +39,7 @@ RedMind는 Agent가 자유롭게 행동하는 자동화 도구가 아닙니다. 
 승인, typed tool, 검증된 Evidence를 차례로 통과한 작업만 실행하고 전체 과정을 영속
 trace로 남기는 **정책 통제형 보안 연구 플랫폼**입니다.
 
-![RedMind v0.2 architecture overview](./docs/assets/architecture-overview.svg)
+![RedMind v0.3 architecture overview](./docs/assets/architecture-overview.svg)
 
 | 계층 | 한 문장 요약 |
 |---|---|
@@ -154,6 +154,7 @@ OTLP collector를 사용하는 경우 `REDMIND_OTLP_ENDPOINT=http://127.0.0.1:43
 | Durable Operations | async SQLAlchemy/PostgreSQL repository와 runtime timeline adapter | readiness, schema validation |
 | Access & Audit | digest-backed bearer RBAC와 HMAC-SHA256 감사 export | token 비노출, constant-time compare |
 | Telemetry | OpenTelemetry HTTP span·count·latency와 선택적 OTLP export | credential·payload 미수집 |
+| Distributed Runtime | bounded local worker queue, cooperative cancel, idempotency, project scope | worker/pending 상한, cross-project 차단 |
 
 ## 아키텍처
 
@@ -205,6 +206,7 @@ RedMind/
 ├── src/redmind/
 │   ├── runtime/
 │   │   ├── engine.py          # bounded async Agent runtime
+│   │   ├── queue.py            # bounded worker queue and cancellation
 │   │   ├── state_machine.py   # lifecycle 전이 규칙
 │   │   ├── policy.py          # scope/risk/budget 정책
 │   │   ├── tools.py           # typed auditable Tool Registry
@@ -248,7 +250,7 @@ RedMind/
 
 ## 현재 상태
 
-`v0.2.0` Durable Operations까지 구현되어 있습니다.
+`v0.3.0` Distributed Execution까지 구현되어 있습니다.
 
 - [x] Agent Runtime
 - [x] Policy Engine
@@ -264,9 +266,12 @@ RedMind/
 - [x] Viewer/Auditor authentication과 RBAC
 - [x] Server-side HMAC signed audit export
 - [x] OpenTelemetry trace·metric·OTLP export
+- [x] Bounded worker queue와 cooperative cancellation propagation
+- [x] Idempotency key 기반 재전송 안전성
+- [x] Multi-project scope isolation
 
-다음 마일스톤은 bounded worker queue, idempotency, cancellation propagation과
-multi-project scope isolation입니다. 세부 계획은 [Roadmap](./docs/roadmap.md)에 있습니다.
+다음 마일스톤은 versioned public API, migration policy와 independent security review입니다.
+세부 계획은 [Roadmap](./docs/roadmap.md)에 있습니다.
 
 ## 개발 참여
 
