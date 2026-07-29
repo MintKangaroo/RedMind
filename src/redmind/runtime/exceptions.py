@@ -16,6 +16,36 @@ class RunNotFoundError(RuntimeErrorBase):
         super().__init__(f"run {run_id} was not found")
 
 
+class ProjectScopeViolationError(RuntimeErrorBase):
+    """Raised when a caller addresses a run from another project scope."""
+
+    def __init__(self, run_id: UUID, project_id: str) -> None:
+        super().__init__(f"run {run_id} is outside project scope {project_id}")
+
+
+class IdempotencyConflictError(RuntimeErrorBase):
+    """Raised when an idempotency key is concurrently claimed by another run."""
+
+    def __init__(self, project_id: str, idempotency_key: str) -> None:
+        super().__init__(
+            f"idempotency key {idempotency_key!r} is already claimed in project {project_id}"
+        )
+
+
+class QueueCapacityError(RuntimeErrorBase):
+    """Raised when a bounded execution queue cannot accept another job."""
+
+    def __init__(self, capacity: int) -> None:
+        super().__init__(f"execution queue capacity {capacity} has been reached")
+
+
+class QueueClosedError(RuntimeErrorBase):
+    """Raised when work is submitted after queue shutdown."""
+
+    def __init__(self) -> None:
+        super().__init__("execution queue is closed")
+
+
 class StepNotFoundError(RuntimeErrorBase):
     """Raised when a step identifier is unknown to the trace store."""
 

@@ -79,7 +79,10 @@ class AttackPathPlanner:
             identity = (edge.target_id, edge.validation_action)
             if identity in seen:
                 continue
-            if edge.target_id not in self.allowed_targets or edge.tool_name not in self.allowed_tools:
+            if (
+                edge.target_id not in self.allowed_targets
+                or edge.tool_name not in self.allowed_tools
+            ):
                 continue
             required = set(edge.required_evidence)
             matched = required & available_evidence

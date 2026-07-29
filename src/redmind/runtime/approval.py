@@ -4,22 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from enum import Enum
 from hashlib import sha256
 from typing import Annotated
 from uuid import UUID, uuid4
 
 from pydantic import Field
 
-from redmind.runtime.models import RunRequest, RuntimeModel
+from redmind.runtime.models import RunRequest, RuntimeModel, StrEnum
 from redmind.runtime.planner import ActionProposal
 from redmind.runtime.policy import PolicyEngine, PolicyViolation
 
+UTC = timezone.utc  # noqa: UP017
 
-UTC = timezone.utc
 
-
-class ApprovalStatus(str, Enum):
+class ApprovalStatus(StrEnum):
     AWAITING_APPROVAL = "awaiting_approval"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -27,7 +25,7 @@ class ApprovalStatus(str, Enum):
     EXECUTING = "executing"
 
 
-class ApprovalEventType(str, Enum):
+class ApprovalEventType(StrEnum):
     REQUESTED = "requested"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -215,9 +213,7 @@ class ApprovalService:
 
     def audit_log(self, request_id: UUID | None = None) -> tuple[ApprovalAuditEvent, ...]:
         return tuple(
-            event
-            for event in self._events
-            if request_id is None or event.request_id == request_id
+            event for event in self._events if request_id is None or event.request_id == request_id
         )
 
     def _pending(self, request_id: UUID) -> ApprovalRequest:

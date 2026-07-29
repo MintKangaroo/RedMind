@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="800" viewBox="0 0 1440 800" role="img" aria-labelledby="title desc">
+  <title id="title">RedMind v0.3 system architecture</title>
+  <desc id="desc">Policy-controlled multi-agent runtime, durable trace storage, authenticated observer API, dashboard, signed audit export and OpenTelemetry.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11171b"/>
+      <stop offset="0.52" stop-color="#080b0d"/>
+      <stop offset="1" stop-color="#100b0e"/>
+    </linearGradient>
+    <linearGradient id="redCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#231418"/>
+      <stop offset="1" stop-color="#141014"/>
+    </linearGradient>
+    <linearGradient id="mintCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#10201d"/>
+      <stop offset="1" stop-color="#101618"/>
+    </linearGradient>
+    <linearGradient id="blueCard" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#111d25"/>
+      <stop offset="1" stop-color="#101619"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000" flood-opacity=".35"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrowMint" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#50e1b3"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#ef5364"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#66b7ff"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .label { fill: #75838b; font-size: 11px; font-weight: 800; letter-spacing: 2px; }
+      .title { fill: #f4f7f8; font-size: 21px; font-weight: 780; }
+      .copy { fill: #89969d; font-size: 13px; }
+      .small { fill: #65737b; font-size: 11px; }
+      .pill { font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+      .line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1438" height="798" rx="24" fill="url(#background)" stroke="#28333a" stroke-width="2"/>
+  <path d="M0 170H1440M0 530H1440" stroke="#1d272d"/>
+  <path d="M70 0V800M1370 0V800" stroke="#151e23"/>
+
+  <g class="sans">
+    <text x="70" y="60" class="label" fill="#ef5364">REDMIND / SYSTEM MAP</text>
+    <text x="70" y="98" fill="#f4f7f8" font-size="34" font-weight="820">Policy-controlled security research</text>
+    <text x="70" y="128" class="copy">실행 경계부터 영속 저장·역할 기반 관찰·서명 감사까지 한 흐름으로 연결됩니다.</text>
+    <rect x="1192" y="48" width="178" height="42" rx="21" fill="#13221e" stroke="#285547"/>
+    <circle cx="1218" cy="69" r="5" fill="#50e1b3" filter="url(#glow)"/>
+    <text x="1235" y="73" class="mono pill" fill="#50e1b3">v0.3 DISTRIBUTED OPS</text>
+
+    <text x="70" y="205" class="label">01 · CONTROL PLANE</text>
+    <text x="70" y="228" class="small">변경 불가능한 실행 범위와 사람의 승인 경계</text>
+
+    <path class="line" d="M300 307H380" stroke="#ef5364" marker-end="url(#arrowRed)"/>
+    <path class="line" d="M620 307H700" stroke="#ef5364" marker-end="url(#arrowRed)"/>
+    <path class="line" d="M940 307H1020" stroke="#ef5364" marker-end="url(#arrowRed)"/>
+
+    <g filter="url(#shadow)">
+      <rect x="70" y="255" width="230" height="104" rx="14" fill="url(#redCard)" stroke="#4b2930"/>
+      <rect x="380" y="255" width="240" height="104" rx="14" fill="#11171b" stroke="#303c43"/>
+      <rect x="700" y="255" width="240" height="104" rx="14" fill="url(#redCard)" stroke="#563039"/>
+      <rect x="1020" y="255" width="350" height="104" rx="14" fill="url(#mintCard)" stroke="#2a5146"/>
+    </g>
+    <circle cx="98" cy="282" r="7" fill="#ef5364"/>
+    <text x="118" y="286" class="label" fill="#ef5364">OPERATOR</text>
+    <text x="94" y="317" class="title">Authorized scope</text>
+    <text x="94" y="340" class="small">target · tool · risk · budget</text>
+
+    <circle cx="408" cy="282" r="7" fill="#88969e"/>
+    <text x="428" y="286" class="label">BOUNDED RUNTIME</text>
+    <text x="404" y="317" class="title">Agent orchestration</text>
+    <text x="404" y="340" class="small">state machine · timeout · retry</text>
+
+    <circle cx="728" cy="282" r="7" fill="#ef5364"/>
+    <text x="748" y="286" class="label" fill="#ef5364">POLICY ENGINE</text>
+    <text x="724" y="317" class="title">Deny by default</text>
+    <text x="724" y="340" class="small">public IP · shell · scope change 차단</text>
+
+    <circle cx="1048" cy="282" r="7" fill="#50e1b3" filter="url(#glow)"/>
+    <text x="1068" y="286" class="label" fill="#50e1b3">HUMAN APPROVAL</text>
+    <text x="1044" y="317" class="title">Snapshot + revalidation</text>
+    <text x="1044" y="340" class="small">만료 · 거부 · 변경 탐지 · 실행 직전 재검증</text>
+
+    <path class="line" d="M500 359V415H575" stroke="#76848b" marker-end="url(#arrowMint)"/>
+    <path class="line" d="M1195 359V415H865" stroke="#50e1b3" marker-end="url(#arrowMint)"/>
+    <path class="line" d="M750 454H825" stroke="#50e1b3" marker-end="url(#arrowMint)"/>
+    <path class="line" d="M1060 454H1135" stroke="#50e1b3" marker-end="url(#arrowMint)"/>
+    <path class="line" d="M1260 493V510H440V493" stroke="#66b7ff" stroke-dasharray="5 7" marker-end="url(#arrowBlue)"/>
+
+    <text x="70" y="405" class="label">02 · EVIDENCE LOOP</text>
+    <text x="70" y="428" class="small">외부 응답은 끝까지 untrusted provenance 유지</text>
+
+    <g filter="url(#shadow)">
+      <rect x="575" y="411" width="175" height="86" rx="13" fill="#12181c" stroke="#303b42"/>
+      <rect x="825" y="411" width="235" height="86" rx="13" fill="url(#mintCard)" stroke="#2b5147"/>
+      <rect x="1135" y="411" width="235" height="86" rx="13" fill="url(#blueCard)" stroke="#29465a"/>
+      <rect x="320" y="411" width="120" height="86" rx="13" fill="url(#blueCard)" stroke="#29465a"/>
+    </g>
+    <text x="599" y="438" class="label">ANALYSTS</text>
+    <text x="599" y="466" class="title" font-size="18">Evidence gap</text>
+    <text x="599" y="485" class="small">Recon · Enumeration</text>
+
+    <text x="849" y="438" class="label" fill="#50e1b3">TYPED TOOL REGISTRY</text>
+    <text x="849" y="466" class="title" font-size="18">Allowlisted action</text>
+    <text x="849" y="485" class="small">permission · schema · timeout · audit</text>
+
+    <text x="1159" y="438" class="label" fill="#66b7ff">EXTERNAL ADAPTER</text>
+    <text x="1159" y="466" class="title" font-size="18">Schema validation</text>
+    <text x="1159" y="485" class="small">bounded HTTP operations only</text>
+
+    <text x="344" y="438" class="label" fill="#66b7ff">EVIDENCE</text>
+    <text x="344" y="466" class="title" font-size="18">Validated</text>
+    <text x="344" y="485" class="small">untrusted</text>
+
+    <text x="70" y="565" class="label">03 · DURABLE OBSERVATION PLANE</text>
+    <text x="70" y="588" class="small">실행 상태를 바꾸지 않는 read-only control room</text>
+
+    <path class="line" d="M300 675H370" stroke="#66b7ff" marker-end="url(#arrowBlue)"/>
+    <path class="line" d="M600 675H670" stroke="#66b7ff" marker-end="url(#arrowBlue)"/>
+    <path class="line" d="M930 675H1000" stroke="#66b7ff" marker-end="url(#arrowBlue)"/>
+
+    <g filter="url(#shadow)">
+      <rect x="70" y="622" width="230" height="106" rx="14" fill="#11171b" stroke="#303c43"/>
+      <rect x="370" y="622" width="230" height="106" rx="14" fill="url(#blueCard)" stroke="#29465a"/>
+      <rect x="670" y="622" width="260" height="106" rx="14" fill="url(#mintCard)" stroke="#2b5147"/>
+      <rect x="1000" y="622" width="370" height="106" rx="14" fill="url(#redCard)" stroke="#4b2930"/>
+    </g>
+    <text x="94" y="649" class="label">RUNTIME ADAPTER</text>
+    <text x="94" y="680" class="title">Trace → Timeline</text>
+    <text x="94" y="705" class="small">immutable view model</text>
+
+    <text x="394" y="649" class="label" fill="#66b7ff">POSTGRESQL</text>
+    <text x="394" y="680" class="title">Durable repository</text>
+    <text x="394" y="705" class="small">timeline · approval · audit event</text>
+
+    <text x="694" y="649" class="label" fill="#50e1b3">OBSERVER API</text>
+    <text x="694" y="680" class="title">Bearer RBAC</text>
+    <text x="694" y="705" class="small">Viewer · Auditor · readiness</text>
+
+    <text x="1024" y="649" class="label" fill="#ef5364">OPERATIONS OUTPUT</text>
+    <text x="1024" y="680" class="title">Dashboard + signed audit</text>
+    <text x="1024" y="705" class="small">HMAC-SHA256 export · OTLP trace/metric</text>
+
+    <rect x="70" y="756" width="1300" height="1" fill="#202a30"/>
+    <text x="70" y="782" class="mono small">TRUST BOUNDARY  /  NO PUBLIC TARGETS  /  NO FREE-FORM SHELL  /  NO UNBOUNDED EXECUTION</text>
+    <text x="1370" y="782" text-anchor="end" class="mono small" fill="#50e1b3">READ ONLY OBSERVER</text>
+  </g>
+</svg>

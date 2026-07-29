@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from enum import Enum
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from redmind.runtime.models import StrEnum
 
-class ToolCategory(str, Enum):
+
+class ToolCategory(StrEnum):
     READ_ONLY = "read_only"
     OBSERVATION = "observation"
     VALIDATION = "validation"
     STATE_CHANGING = "state_changing"
 
 
-class ToolPermission(str, Enum):
+class ToolPermission(StrEnum):
     READ = "read"
     OBSERVE = "observe"
     VALIDATE = "validate"
@@ -45,10 +46,16 @@ ToolHandler = Callable[[InputT], Awaitable[OutputT]]
 AuditHook = Callable[[ToolCallRecord], Awaitable[None]]
 
 
-class ToolSpec(Generic[InputT, OutputT]):
-    def __init__(self, name: str, category: ToolCategory, permission: ToolPermission,
-                 input_model: type[InputT], handler: ToolHandler[InputT],
-                 timeout_seconds: float = 30.0) -> None:
+class ToolSpec(Generic[InputT, OutputT]):  # noqa: UP046
+    def __init__(
+        self,
+        name: str,
+        category: ToolCategory,
+        permission: ToolPermission,
+        input_model: type[InputT],
+        handler: ToolHandler[InputT, OutputT],
+        timeout_seconds: float = 30.0,
+    ) -> None:
         if not name or any(char.isspace() for char in name) or "shell" in name.lower():
             raise ValueError("tool name must be a non-shell identifier")
         if timeout_seconds <= 0:
@@ -60,9 +67,15 @@ class ToolSpec(Generic[InputT, OutputT]):
 class ToolRegistry:
     """Registry that only exposes explicitly enabled non-mutating tools."""
 
-    def __init__(self, *, enabled_categories: frozenset[ToolCategory] | None = None,
-                 audit_hook: AuditHook | None = None) -> None:
-        self.enabled_categories = enabled_categories or frozenset({ToolCategory.READ_ONLY, ToolCategory.OBSERVATION})
+    def __init__(
+        self,
+        *,
+        enabled_categories: frozenset[ToolCategory] | None = None,
+        audit_hook: AuditHook | None = None,
+    ) -> None:
+        self.enabled_categories = enabled_categories or frozenset(
+            {ToolCategory.READ_ONLY, ToolCategory.OBSERVATION}
+        )
         self.audit_hook = audit_hook
         self._tools: dict[str, ToolSpec[Any, Any]] = {}
 
@@ -78,7 +91,11 @@ class ToolRegistry:
             spec = self._tools[name]
         except KeyError as exc:
             raise KeyError(f"tool {name} is not registered") from exc
-        validated = arguments if isinstance(arguments, ToolInput) else spec.input_model.model_validate(arguments)
+        validated = (
+            arguments
+            if isinstance(arguments, ToolInput)
+            else spec.input_model.model_validate(arguments)
+        )
         try:
             result = await asyncio.wait_for(spec.handler(validated), timeout=spec.timeout_seconds)
         except Exception:
@@ -89,5 +106,11 @@ class ToolRegistry:
 
     async def _audit(self, spec: ToolSpec[Any, Any], arguments: ToolInput, outcome: str) -> None:
         if self.audit_hook:
-            await self.audit_hook(ToolCallRecord(tool_name=spec.name, category=spec.category,
-                                                  arguments=arguments.model_dump(), outcome=outcome))
+            await self.audit_hook(
+                ToolCallRecord(
+                    tool_name=spec.name,
+                    category=spec.category,
+                    arguments=arguments.model_dump(),
+                    outcome=outcome,
+                )
+            )

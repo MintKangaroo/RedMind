@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">RedMind</title>
+  <defs>
+    <linearGradient id="redmind-gradient" x1="8" y1="4" x2="57" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff6675"/>
+      <stop offset="1" stop-color="#cf3448"/>
+    </linearGradient>
+  </defs>
+  <path fill="#101417" stroke="#2d363d" stroke-width="2" d="M32 3 57 17v30L32 61 7 47V17z"/>
+  <path fill="url(#redmind-gradient)" d="M19 17h16c8 0 13 4 13 11 0 5-3 9-8 10l9 10H38l-8-9h-2v9h-9zm9 8v7h6c3 0 5-1 5-4s-2-3-5-3z"/>
+  <path fill="#50e1b3" d="m32 6 22 13v4L32 10 10 23v-4z" opacity=".72"/>
+</svg>

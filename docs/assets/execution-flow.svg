@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="560" viewBox="0 0 1440 560" role="img" aria-labelledby="title desc">
+  <title id="title">RedMind guarded execution flow</title>
+  <desc id="desc">Seven stages from immutable scope through policy, human approval, typed tools, evidence validation, durable audit and dashboard observation.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0f1519"/>
+      <stop offset="1" stop-color="#080a0c"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#000" flood-opacity=".36"/>
+    </filter>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0 0L8 4L0 8Z" fill="#64747d"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .eyebrow { fill: #78868e; font-size: 11px; font-weight: 800; letter-spacing: 2px; }
+      .heading { fill: #f2f5f6; font-size: 18px; font-weight: 780; }
+      .copy { fill: #829098; font-size: 12px; }
+      .number { font-size: 12px; font-weight: 850; }
+      .connector { fill: none; stroke: #64747d; stroke-width: 2; stroke-linecap: round; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="1438" height="558" rx="24" fill="url(#bg)" stroke="#28333a" stroke-width="2"/>
+  <g class="sans">
+    <text x="64" y="55" class="eyebrow" fill="#ef5364">GUARDED EXECUTION / 7 STAGES</text>
+    <text x="64" y="91" fill="#f4f7f8" font-size="30" font-weight="820">제안에서 감사 가능한 관찰까지</text>
+    <text x="64" y="119" class="copy">각 단계는 검증된 구조만 다음 경계로 전달하며, 거부·만료·실패도 동일한 trace에 남습니다.</text>
+
+    <path class="connector" d="M238 231H274"/>
+    <path class="connector" d="M454 231H490"/>
+    <path class="connector" d="M670 231H706"/>
+    <path class="connector" d="M886 231H922"/>
+    <path class="connector" d="M1102 231H1138"/>
+    <path class="connector" d="M1318 231H1340V390H1102"/>
+    <path class="connector" d="M922 390H886"/>
+    <path class="connector" d="M706 390H670"/>
+    <path class="connector" d="M490 390H454"/>
+    <path class="connector" d="M274 390H238"/>
+
+    <g filter="url(#shadow)">
+      <rect x="58" y="166" width="180" height="130" rx="14" fill="#171115" stroke="#4e2b33"/>
+      <rect x="274" y="166" width="180" height="130" rx="14" fill="#11171b" stroke="#303b42"/>
+      <rect x="490" y="166" width="180" height="130" rx="14" fill="#171115" stroke="#563039"/>
+      <rect x="706" y="166" width="180" height="130" rx="14" fill="#101c19" stroke="#2c5147"/>
+      <rect x="922" y="166" width="180" height="130" rx="14" fill="#101c19" stroke="#2c5147"/>
+      <rect x="1138" y="166" width="180" height="130" rx="14" fill="#111b22" stroke="#2d4a5d"/>
+      <rect x="922" y="325" width="180" height="130" rx="14" fill="#111b22" stroke="#2d4a5d"/>
+      <rect x="706" y="325" width="180" height="130" rx="14" fill="#111b22" stroke="#2d4a5d"/>
+      <rect x="490" y="325" width="180" height="130" rx="14" fill="#101c19" stroke="#2c5147"/>
+      <rect x="274" y="325" width="180" height="130" rx="14" fill="#171115" stroke="#4e2b33"/>
+      <rect x="58" y="325" width="180" height="130" rx="14" fill="#101c19" stroke="#2c5147"/>
+    </g>
+
+    <circle cx="87" cy="195" r="15" fill="#ef5364"/><text x="87" y="199" text-anchor="middle" class="mono number" fill="#fff">01</text>
+    <text x="81" y="232" class="eyebrow" fill="#ef5364">SCOPE LOCK</text>
+    <text x="81" y="258" class="heading">실행 범위 고정</text>
+    <text x="81" y="280" class="copy">target · tool · budget</text>
+
+    <circle cx="303" cy="195" r="15" fill="#75838b"/><text x="303" y="199" text-anchor="middle" class="mono number" fill="#fff">02</text>
+    <text x="297" y="232" class="eyebrow">ANALYZE</text>
+    <text x="297" y="258" class="heading">Evidence gap</text>
+    <text x="297" y="280" class="copy">근거가 있는 제안만</text>
+
+    <circle cx="519" cy="195" r="15" fill="#ef5364"/><text x="519" y="199" text-anchor="middle" class="mono number" fill="#fff">03</text>
+    <text x="513" y="232" class="eyebrow" fill="#ef5364">POLICY</text>
+    <text x="513" y="258" class="heading">Deny by default</text>
+    <text x="513" y="280" class="copy">scope · risk 검증</text>
+
+    <circle cx="735" cy="195" r="15" fill="#50e1b3"/><text x="735" y="199" text-anchor="middle" class="mono number" fill="#07110e">04</text>
+    <text x="729" y="232" class="eyebrow" fill="#50e1b3">APPROVAL</text>
+    <text x="729" y="258" class="heading">Human review</text>
+    <text x="729" y="280" class="copy">snapshot · expiry</text>
+
+    <circle cx="951" cy="195" r="15" fill="#50e1b3"/><text x="951" y="199" text-anchor="middle" class="mono number" fill="#07110e">05</text>
+    <text x="945" y="232" class="eyebrow" fill="#50e1b3">REVALIDATE</text>
+    <text x="945" y="258" class="heading">변경 탐지</text>
+    <text x="945" y="280" class="copy">실행 직전 재검증</text>
+
+    <circle cx="1167" cy="195" r="15" fill="#66b7ff"/><text x="1167" y="199" text-anchor="middle" class="mono number" fill="#071018">06</text>
+    <text x="1161" y="232" class="eyebrow" fill="#66b7ff">TYPED ACTION</text>
+    <text x="1161" y="258" class="heading">Allowlisted tool</text>
+    <text x="1161" y="280" class="copy">schema · timeout</text>
+
+    <circle cx="951" cy="354" r="15" fill="#66b7ff"/><text x="951" y="358" text-anchor="middle" class="mono number" fill="#071018">07</text>
+    <text x="945" y="391" class="eyebrow" fill="#66b7ff">VALIDATE</text>
+    <text x="945" y="417" class="heading">Untrusted response</text>
+    <text x="945" y="439" class="copy">Pydantic schema boundary</text>
+
+    <text x="729" y="364" class="eyebrow" fill="#66b7ff">EVIDENCE</text>
+    <text x="729" y="396" class="heading">검증 결과 등록</text>
+    <text x="729" y="421" class="copy">fact · inference · unknown</text>
+    <rect x="729" y="431" width="104" height="17" rx="8" fill="#132830"/>
+    <text x="781" y="443" text-anchor="middle" class="mono" fill="#66b7ff" font-size="8">PROVENANCE KEPT</text>
+
+    <text x="513" y="364" class="eyebrow" fill="#50e1b3">DURABLE TRACE</text>
+    <text x="513" y="396" class="heading">PostgreSQL 보존</text>
+    <text x="513" y="421" class="copy">timeline · approvals · audit</text>
+    <rect x="513" y="431" width="91" height="17" rx="8" fill="#12271f"/>
+    <text x="558" y="443" text-anchor="middle" class="mono" fill="#50e1b3" font-size="8">APPEND AUDIT</text>
+
+    <text x="297" y="364" class="eyebrow" fill="#ef5364">RBAC + SIGN</text>
+    <text x="297" y="396" class="heading">Viewer / Auditor</text>
+    <text x="297" y="421" class="copy">HMAC-SHA256 export</text>
+    <rect x="297" y="431" width="88" height="17" rx="8" fill="#2b151b"/>
+    <text x="341" y="443" text-anchor="middle" class="mono" fill="#ef5364" font-size="8">FAIL CLOSED</text>
+
+    <text x="81" y="364" class="eyebrow" fill="#50e1b3">OBSERVE</text>
+    <text x="81" y="396" class="heading">Dashboard + OTLP</text>
+    <text x="81" y="421" class="copy">상태 변경 없는 관찰</text>
+    <rect x="81" y="431" width="86" height="17" rx="8" fill="#12271f"/>
+    <text x="124" y="443" text-anchor="middle" class="mono" fill="#50e1b3" font-size="8">READ ONLY</text>
+
+    <rect x="58" y="493" width="1260" height="1" fill="#202a30"/>
+    <circle cx="72" cy="520" r="5" fill="#ef5364"/>
+    <text x="87" y="524" class="mono copy">DENY / REJECT / EXPIRE / FAIL</text>
+    <text x="310" y="524" class="copy">어느 단계에서 중단되어도 상태와 사유를 동일한 감사 trace에 기록합니다.</text>
+    <text x="1318" y="524" text-anchor="end" class="mono copy" fill="#50e1b3">BOUNDED · AUDITABLE · REVERSIBLE</text>
+  </g>
+</svg>

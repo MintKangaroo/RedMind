@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 import pytest
 
@@ -13,6 +14,8 @@ from redmind.runtime import (
     PolicyViolation,
     RunRequest,
 )
+
+UTC = timezone.utc  # noqa: UP017
 
 
 class Clock:
@@ -122,4 +125,31 @@ def test_changed_proposal_and_changed_scope_are_rejected():
             action,
             run_request(target_ids=("other",)),
         )
-UTC = timezone.utc
+
+
+def test_approval_rejects_invalid_ttl_lineage_text_and_unknown_ids():
+    workflow = service(Clock())
+    action = proposal()
+    with pytest.raises(ApprovalError, match="TTL"):
+        workflow.request(action, ttl_seconds=0)
+    with pytest.raises(ApprovalError, match="blank"):
+        workflow.request(action, actor=" ")
+
+    pending = workflow.request(action)
+    with pytest.raises(ApprovalError, match="rejected or expired"):
+        workflow.reapprove(pending.id, action, actor="planner")
+    with pytest.raises(ApprovalError, match="not found"):
+        workflow.get(uuid4())
+
+
+def test_execution_revalidation_rejects_tool_removed_from_run_allowlist():
+    workflow = service(Clock())
+    action = proposal()
+    request = workflow.request(action)
+    workflow.approve(request.id, approver="reviewer", reason="scope verified")
+    with pytest.raises(PolicyViolation, match="tool"):
+        workflow.authorize_execution(
+            request.id,
+            action,
+            run_request(tool_names=()),
+        )

@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
+import sys
 from datetime import datetime
 from enum import Enum
+from typing import Annotated
+from uuid import UUID
 
-try:  # Python 3.11+
-    from enum import StrEnum
-except ImportError:  # pragma: no cover - compatibility for local Python 3.10 tooling
-    class StrEnum(str, Enum):
+if sys.version_info >= (3, 11):  # noqa: UP036 - local Python 3.10 test tooling
+    from enum import StrEnum as StrEnum  # pragma: no cover - runtime-version branch
+else:  # pragma: no cover - compatibility for local Python 3.10 tooling
+
+    class StrEnum(str, Enum):  # noqa: UP042
         """Backport of enum.StrEnum for supported tooling on Python 3.10."""
 
         def __str__(self) -> str:
-            return self.value
-from typing import Annotated
-from uuid import UUID
+            return str(self.value)
+
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
 
@@ -94,6 +97,8 @@ class RunRequest(RuntimeModel):
     """Caller-supplied bounds and objective for a new run."""
 
     objective: Annotated[str, Field(min_length=1, max_length=2_000)]
+    project_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")] = "default"
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=128)] | None = None
     max_steps: Annotated[int, Field(ge=1, le=1_000)] = 10
     timeout_seconds: Annotated[float, Field(gt=0, le=86_400)] = 300.0
     target_ids: tuple[Annotated[str, Field(min_length=1, max_length=200)], ...] = ()
@@ -125,6 +130,8 @@ class Run(RuntimeModel):
     cancellation_requested_at: datetime | None = None
     cancellation_reason: str | None = None
     failure: FailureDetails | None = None
+    project_id: Annotated[str, Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")] = "default"
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=128)] | None = None
 
 
 class Step(RuntimeModel):

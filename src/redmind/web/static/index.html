@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#090b0d">
+    <meta
+      name="description"
+      content="RedMind 정책 통제형 Multi-Agent Security Research Platform 실행 관찰 대시보드"
+    >
+    <title>RedMind · Security Operations Dashboard</title>
+    <link rel="icon" href="/assets/redmind-mark.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/app.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 건너뛰기</a>
+
+    <header class="topbar">
+      <button
+        class="icon-button menu-toggle"
+        id="menu-toggle"
+        type="button"
+        aria-label="메뉴 열기"
+        aria-controls="sidebar"
+        aria-expanded="false"
+      >
+        <span></span><span></span><span></span>
+      </button>
+      <a class="brand" href="/" aria-label="RedMind 홈">
+        <img src="/assets/redmind-mark.svg" alt="" width="38" height="38">
+        <span class="brand-copy">
+          <strong>RED<span>MIND</span></strong>
+          <small>CONTROLLED SECURITY RESEARCH</small>
+        </span>
+      </a>
+      <div class="top-actions">
+        <span class="api-health" id="api-health"><i></i> API CHECK</span>
+        <span class="environment" id="environment-badge"><i></i> AUTHORIZED LAB</span>
+        <time class="clock" id="clock">--:--:-- KST</time>
+        <a class="docs-link" href="/api/docs" target="_blank" rel="noreferrer">API DOCS ↗</a>
+        <button class="access-button" id="access-button" type="button" aria-haspopup="dialog">
+          <span class="access-indicator"></span>
+          <span id="access-label">LOCAL</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-scroll">
+          <p class="nav-label">CONTROL ROOM</p>
+          <nav class="primary-nav" aria-label="대시보드 메뉴">
+            <a class="active" href="#overview">
+              <span class="nav-icon">⌁</span><span>개요</span>
+            </a>
+            <a href="#timeline-panel">
+              <span class="nav-icon">⌘</span><span>실행 타임라인</span>
+            </a>
+            <a href="#approval-panel">
+              <span class="nav-icon">✓</span><span>Human Approval</span>
+              <b id="approval-nav-count">0</b>
+            </a>
+            <a href="#evidence-panel">
+              <span class="nav-icon">◇</span><span>Evidence</span>
+            </a>
+            <a href="#report-panel">
+              <span class="nav-icon">≡</span><span>최종 보고서</span>
+            </a>
+          </nav>
+
+          <div class="sidebar-section">
+            <div class="sidebar-section-title">
+              <p class="nav-label">RECENT RUNS</p>
+              <span id="run-count">0</span>
+            </div>
+            <div class="recent-runs" id="recent-runs" aria-label="최근 실행"></div>
+          </div>
+
+          <section class="safety-card" id="policy-panel">
+            <div class="safety-heading">
+              <span class="safety-icon">S</span>
+              <div><strong>Scope Guard</strong><small>ENFORCING</small></div>
+              <i></i>
+            </div>
+            <p>등록된 사설 대상과 승인된 도구만 허용합니다.</p>
+            <div class="safety-rules">
+              <span>PUBLIC IP</span><b>DENY</b>
+              <span>SHELL</span><b>DENY</b>
+              <span>APPROVAL</span><b>REQUIRED</b>
+            </div>
+          </section>
+        </div>
+        <div class="sidebar-footer">
+          <span>REDMIND / OBSERVER</span>
+          <strong id="observer-version">v0.3.0</strong>
+        </div>
+      </aside>
+      <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="메뉴 닫기"></button>
+
+      <main class="workspace" id="main-content">
+        <div class="demo-notice" id="mode-notice" role="note">
+          <span id="mode-label"><i></i> DEMO DATA</span>
+          <p id="mode-description">이 화면은 재현 가능한 안전한 trace이며 실제 명령·credential·exploit payload를 포함하지 않습니다.</p>
+          <strong>READ ONLY</strong>
+        </div>
+
+        <section class="overview" id="overview">
+          <div class="page-heading">
+            <div class="heading-copy">
+              <p class="eyebrow">MULTI-AGENT EXECUTION OBSERVER</p>
+              <div class="title-row">
+                <h1>Security Operations <span>Dashboard</span></h1>
+                <span class="run-state loading" id="run-state"><i></i> LOADING</span>
+              </div>
+              <p class="objective" id="objective">승인된 실행 정보를 불러오는 중입니다…</p>
+              <div class="run-meta">
+                <span>RUN <code id="run-id">—</code></span>
+                <span>STARTED <time id="started-at">—</time></span>
+                <span>SYNC <time id="last-sync">—</time></span>
+              </div>
+            </div>
+            <div class="heading-actions">
+              <button class="button secondary" id="refresh-button" type="button">
+                <span>↻</span> 새로고침
+              </button>
+              <button class="button primary" id="export-button" type="button" disabled>
+                <span>⇩</span> 감사 로그 내보내기
+              </button>
+            </div>
+          </div>
+
+          <div class="control-bar">
+            <label class="select-control">
+              <span>관찰할 실행</span>
+              <select id="run-select" aria-label="관찰할 실행 선택">
+                <option>실행 목록 불러오는 중…</option>
+              </select>
+            </label>
+            <label class="search-control">
+              <span class="search-icon">⌕</span>
+              <input
+                id="timeline-search"
+                type="search"
+                placeholder="Agent, 단계 또는 상세 내용 검색"
+                autocomplete="off"
+              >
+              <kbd>/</kbd>
+            </label>
+            <div class="control-summary">
+              <span><i class="dot mint"></i><b id="agent-count">0</b> AGENTS</span>
+              <span><i class="dot blue"></i><b id="event-count">0</b> EVENTS</span>
+            </div>
+          </div>
+
+          <section class="metrics" aria-label="실행 주요 지표">
+            <article class="metric metric-progress">
+              <div class="metric-top"><span>진행률</span><em>BOUNDED</em></div>
+              <strong id="progress">—</strong>
+              <div class="meter" aria-hidden="true"><i id="progress-bar"></i></div>
+              <small id="progress-detail">0 / 0 steps</small>
+            </article>
+            <article class="metric">
+              <div class="metric-top"><span>실행 시간</span><em>MAX 120S</em></div>
+              <strong id="duration">—</strong>
+              <small>cooperative timeout 적용</small>
+            </article>
+            <article class="metric">
+              <div class="metric-top"><span>위험도</span><em>POLICY</em></div>
+              <strong class="risk" id="risk">—</strong>
+              <small>대상 영향 범위: target only</small>
+            </article>
+            <article class="metric">
+              <div class="metric-top"><span>예상 비용</span><em>USD</em></div>
+              <strong id="cost">—</strong>
+              <small id="tokens">— tokens</small>
+            </article>
+            <article class="metric">
+              <div class="metric-top"><span>Evidence</span><em>VALIDATED</em></div>
+              <strong id="evidence-metric">—</strong>
+              <small>외부 입력은 untrusted로 취급</small>
+            </article>
+          </section>
+        </section>
+
+        <section class="failure-banner" id="failure-banner" hidden>
+          <span>!</span>
+          <div><strong id="failure-kind">실행 중단</strong><p id="failure-message"></p></div>
+          <em id="failure-retry">NOT RETRYABLE</em>
+        </section>
+
+        <div class="dashboard-grid">
+          <section class="panel timeline-panel" id="timeline-panel">
+            <div class="panel-header">
+              <div>
+                <p class="panel-kicker">AGENT ORCHESTRATION</p>
+                <h2>실행 타임라인</h2>
+              </div>
+              <div class="panel-header-meta">
+                <span class="trace-status" id="trace-status"><i></i> TRACE READY</span>
+                <span class="result-count" id="timeline-result-count">0 STEPS</span>
+              </div>
+            </div>
+            <div class="timeline" id="timeline" aria-live="polite">
+              <div class="skeleton skeleton-block"></div>
+              <div class="skeleton skeleton-block short"></div>
+            </div>
+          </section>
+
+          <aside class="right-column">
+            <section class="panel compact" id="approval-panel">
+              <div class="panel-header">
+                <div><p class="panel-kicker">HUMAN IN THE LOOP</p><h2>승인 상태</h2></div>
+                <span class="panel-icon shield-icon">✓</span>
+              </div>
+              <div id="approval" class="approval-content">
+                <div class="skeleton"></div>
+              </div>
+            </section>
+
+            <section class="panel compact" id="tools-panel">
+              <div class="panel-header">
+                <div><p class="panel-kicker">AUDITABLE ACTIONS</p><h2>Tool Calls</h2></div>
+                <span class="count" id="tool-count">0</span>
+              </div>
+              <div id="tools" class="tool-list"></div>
+            </section>
+
+            <section class="panel compact budget-panel">
+              <div class="panel-header no-border">
+                <div><p class="panel-kicker">BOUNDED USAGE</p><h2>Token Budget</h2></div>
+                <strong id="budget-label">0%</strong>
+              </div>
+              <div class="budget-bar"><i id="budget-bar"></i></div>
+              <div class="budget-stats">
+                <span><b id="input-tokens">0</b> input</span>
+                <span><b id="output-tokens">0</b> output</span>
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        <div class="lower-grid">
+          <section class="panel" id="evidence-panel">
+            <div class="panel-header">
+              <div><p class="panel-kicker">COLLECTED SIGNALS</p><h2>Evidence Registry</h2></div>
+              <span class="count" id="evidence-count">0</span>
+            </div>
+            <div class="evidence-list" id="evidence"></div>
+          </section>
+
+          <section class="panel" id="report-panel">
+            <div class="panel-header">
+              <div><p class="panel-kicker">REPORT AGENT</p><h2>검증 결과</h2></div>
+              <span class="report-ready" id="report-state"><i></i> READY</span>
+            </div>
+            <div class="report-grid" id="report"></div>
+          </section>
+        </div>
+
+        <footer class="page-footer">
+          <div><img src="/assets/redmind-mark.svg" alt="" width="22" height="22"><span>RedMind Observer</span></div>
+          <p>Policy-controlled · Evidence-driven · Human-approved</p>
+          <a href="https://github.com/MintKangaroo/RedMind" target="_blank" rel="noreferrer">GitHub ↗</a>
+        </footer>
+      </main>
+    </div>
+
+    <dialog class="access-dialog" id="access-dialog" aria-labelledby="access-title">
+      <form class="access-form" id="access-form">
+        <div class="access-dialog-heading">
+          <span class="access-lock">◆</span>
+          <div>
+            <p>OBSERVER ACCESS</p>
+            <h2 id="access-title">보호된 실행 기록 열기</h2>
+          </div>
+        </div>
+        <p class="access-copy" id="access-message">
+          발급받은 Viewer 또는 Auditor bearer token을 입력하세요. Token은 현재 브라우저 탭의
+          session storage에만 보관됩니다.
+        </p>
+        <label class="token-control">
+          <span>BEARER TOKEN</span>
+          <input
+            id="access-token"
+            name="token"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="redmind access token"
+            required
+          >
+        </label>
+        <div class="access-role-grid" aria-label="접근 역할">
+          <div><strong>VIEWER</strong><span>실행·Evidence 조회</span></div>
+          <div><strong>AUDITOR</strong><span>조회 + 서명 감사 파일</span></div>
+        </div>
+        <div class="access-dialog-actions">
+          <button class="button quiet" id="clear-access" type="button">저장된 Token 지우기</button>
+          <button class="button secondary" id="access-cancel" type="button">닫기</button>
+          <button class="button primary" type="submit">안전하게 연결</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>

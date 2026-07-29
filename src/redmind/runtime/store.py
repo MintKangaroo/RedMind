@@ -8,11 +8,17 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from redmind.runtime.exceptions import RunNotFoundError, StepNotFoundError
+from redmind.runtime.exceptions import (
+    IdempotencyConflictError,
+    ProjectScopeViolationError,
+    RunNotFoundError,
+    StepNotFoundError,
+)
 from redmind.runtime.models import (
     AgentState,
     Evidence,
     FailureDetails,
+    JsonObject,
     Message,
     Run,
     RunTrace,
@@ -30,9 +36,11 @@ class TraceStore(Protocol):
 
     async def create_step(self, step: Step) -> None: ...
 
-    async def get_run(self, run_id: UUID) -> Run: ...
+    async def get_run(self, run_id: UUID, project_id: str | None = None) -> Run: ...
 
-    async def get_step(self, step_id: UUID) -> Step: ...
+    async def get_run_by_idempotency(self, project_id: str, key: str) -> Run | None: ...
+
+    async def get_step(self, step_id: UUID, project_id: str | None = None) -> Step: ...
 
     async def transition_run(
         self,
@@ -40,6 +48,7 @@ class TraceStore(Protocol):
         requested: AgentState,
         occurred_at: datetime,
         failure: FailureDetails | None = None,
+        project_id: str | None = None,
     ) -> Run: ...
 
     async def transition_step(
@@ -48,17 +57,18 @@ class TraceStore(Protocol):
         requested: AgentState,
         occurred_at: datetime,
         failure: FailureDetails | None = None,
+        project_id: str | None = None,
     ) -> Step: ...
 
     async def request_cancellation(
-        self, run_id: UUID, occurred_at: datetime, reason: str
+        self, run_id: UUID, occurred_at: datetime, reason: str, project_id: str | None = None
     ) -> Run: ...
 
-    async def append_message(self, message: Message) -> None: ...
+    async def append_message(self, message: Message, project_id: str | None = None) -> None: ...
 
-    async def append_evidence(self, evidence: Evidence) -> None: ...
+    async def append_evidence(self, evidence: Evidence, project_id: str | None = None) -> None: ...
 
-    async def get_trace(self, run_id: UUID) -> RunTrace: ...
+    async def get_trace(self, run_id: UUID, project_id: str | None = None) -> RunTrace: ...
 
 
 class InMemoryTraceStore:
@@ -67,6 +77,7 @@ class InMemoryTraceStore:
     def __init__(self, id_factory: Callable[[], UUID]) -> None:
         self._id_factory = id_factory
         self._runs: dict[UUID, Run] = {}
+        self._idempotency: dict[tuple[str, str], UUID] = {}
         self._steps: dict[UUID, Step] = {}
         self._messages: list[Message] = []
         self._evidence: list[Evidence] = []
@@ -78,6 +89,11 @@ class InMemoryTraceStore:
         async with self._lock:
             if run.id in self._runs:
                 raise ValueError(f"run {run.id} already exists")
+            if run.idempotency_key is not None:
+                identity = (run.project_id, run.idempotency_key)
+                if identity in self._idempotency:
+                    raise IdempotencyConflictError(*identity)
+                self._idempotency[identity] = run.id
             self._runs[run.id] = run
             self._append_event(
                 run_id=run.id,
@@ -101,13 +117,20 @@ class InMemoryTraceStore:
                 detail={"agent_name": step.agent_name, "sequence": step.sequence},
             )
 
-    async def get_run(self, run_id: UUID) -> Run:
+    async def get_run(self, run_id: UUID, project_id: str | None = None) -> Run:
         async with self._lock:
-            return self._require_run(run_id)
+            return self._require_run(run_id, project_id)
 
-    async def get_step(self, step_id: UUID) -> Step:
+    async def get_run_by_idempotency(self, project_id: str, key: str) -> Run | None:
         async with self._lock:
-            return self._require_step(step_id)
+            run_id = self._idempotency.get((project_id, key))
+            return self._runs.get(run_id) if run_id is not None else None
+
+    async def get_step(self, step_id: UUID, project_id: str | None = None) -> Step:
+        async with self._lock:
+            step = self._require_step(step_id)
+            self._require_run(step.run_id, project_id)
+            return step
 
     async def transition_run(
         self,
@@ -115,9 +138,10 @@ class InMemoryTraceStore:
         requested: AgentState,
         occurred_at: datetime,
         failure: FailureDetails | None = None,
+        project_id: str | None = None,
     ) -> Run:
         async with self._lock:
-            current = self._require_run(run_id)
+            current = self._require_run(run_id, project_id)
             ensure_transition(current.state, requested)
             updated = current.model_copy(
                 update={
@@ -146,9 +170,11 @@ class InMemoryTraceStore:
         requested: AgentState,
         occurred_at: datetime,
         failure: FailureDetails | None = None,
+        project_id: str | None = None,
     ) -> Step:
         async with self._lock:
             current = self._require_step(step_id)
+            self._require_run(current.run_id, project_id)
             ensure_transition(current.state, requested)
             updated = current.model_copy(
                 update={
@@ -173,10 +199,14 @@ class InMemoryTraceStore:
             return updated
 
     async def request_cancellation(
-        self, run_id: UUID, occurred_at: datetime, reason: str
+        self,
+        run_id: UUID,
+        occurred_at: datetime,
+        reason: str,
+        project_id: str | None = None,
     ) -> Run:
         async with self._lock:
-            current = self._require_run(run_id)
+            current = self._require_run(run_id, project_id)
             updated = current.model_copy(
                 update={
                     "cancellation_requested_at": occurred_at,
@@ -192,8 +222,9 @@ class InMemoryTraceStore:
             )
             return updated
 
-    async def append_message(self, message: Message) -> None:
+    async def append_message(self, message: Message, project_id: str | None = None) -> None:
         async with self._lock:
+            self._require_run(message.run_id, project_id)
             self._validate_child(message.run_id, message.step_id)
             self._messages.append(message)
             self._append_event(
@@ -204,8 +235,9 @@ class InMemoryTraceStore:
                 detail={"message_id": str(message.id)},
             )
 
-    async def append_evidence(self, evidence: Evidence) -> None:
+    async def append_evidence(self, evidence: Evidence, project_id: str | None = None) -> None:
         async with self._lock:
+            self._require_run(evidence.run_id, project_id)
             self._validate_child(evidence.run_id, evidence.step_id)
             self._evidence.append(evidence)
             self._append_event(
@@ -216,9 +248,9 @@ class InMemoryTraceStore:
                 detail={"evidence_id": str(evidence.id)},
             )
 
-    async def get_trace(self, run_id: UUID) -> RunTrace:
+    async def get_trace(self, run_id: UUID, project_id: str | None = None) -> RunTrace:
         async with self._lock:
-            run = self._require_run(run_id)
+            run = self._require_run(run_id, project_id)
             return RunTrace(
                 run=run,
                 steps=tuple(
@@ -232,11 +264,14 @@ class InMemoryTraceStore:
                 events=tuple(event for event in self._events if event.run_id == run_id),
             )
 
-    def _require_run(self, run_id: UUID) -> Run:
+    def _require_run(self, run_id: UUID, project_id: str | None = None) -> Run:
         try:
-            return self._runs[run_id]
+            run = self._runs[run_id]
         except KeyError as exc:
             raise RunNotFoundError(run_id) from exc
+        if project_id is not None and run.project_id != project_id:
+            raise ProjectScopeViolationError(run_id, project_id)
+        return run
 
     def _require_step(self, step_id: UUID) -> Step:
         try:
@@ -259,7 +294,7 @@ class InMemoryTraceStore:
         step_id: UUID | None = None,
         state_from: AgentState | None = None,
         state_to: AgentState | None = None,
-        detail: dict[str, str | int | float | bool | None] | None = None,
+        detail: JsonObject | None = None,
     ) -> None:
         sequence = self._event_sequences.get(run_id, 0) + 1
         self._event_sequences[run_id] = sequence
@@ -278,7 +313,7 @@ class InMemoryTraceStore:
         )
 
     @staticmethod
-    def _failure_detail(failure: FailureDetails | None) -> dict[str, str | bool]:
+    def _failure_detail(failure: FailureDetails | None) -> JsonObject:
         if failure is None:
             return {}
         return {
